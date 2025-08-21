@@ -1,6 +1,11 @@
 spring:
   application:
     name: yu-ai-code-mother-backend
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://175.27.255.222:3306/yu_ai_code_mother
+    username: ai_code
+    password: 050312+Qq
 server:
   port: 8123
   servlet:
