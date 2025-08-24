@@ -46,27 +46,35 @@ public class AiCodeGeneratorFacade {
         };
     }
 
-    public Flux<String> processCodeStream(Flux<String> codeStream,CodeGenTypeEnum codeGenTypeEnum) {
+    /**
+     * 通用流式代码处理方法
+     *
+     * @param codeStream  代码流
+     * @param codeGenType 代码生成类型
+     * @return 流式响应
+     */
+    private Flux<String> processCodeStream(Flux<String> codeStream, CodeGenTypeEnum codeGenType) {
         StringBuilder codeBuilder = new StringBuilder();
-        return codeStream.doOnNext(chunk ->{
+        return codeStream.doOnNext(chunk -> {
             // 实时收集代码片段
             codeBuilder.append(chunk);
         }).doOnComplete(() -> {
-            //流式返回完成保存代码
+            // 流式返回完成后保存代码
             try {
                 String completeCode = codeBuilder.toString();
                 // 使用执行器解析代码
-                Object parseResult = CodeParserExecutor.executeParser(completeCode,codeGenTypeEnum);
+                Object parsedResult = CodeParserExecutor.executeParser(completeCode, codeGenType);
                 // 使用执行器保存代码
-                File savaDir = CodeFileSaveExecutor.executeSave(parseResult,codeGenTypeEnum);
-                log.info("代码保存成功，保存路径为：{}",savaDir.getAbsolutePath());
+                File savedDir = CodeFileSaveExecutor.executeSave(parsedResult, codeGenType);
+                log.info("保存成功，路径为：" + savedDir.getAbsolutePath());
             } catch (Exception e) {
-                log.error("代码保存失败：{}",e.getMessage());
+                log.error("保存失败: {}", e.getMessage());
             }
         });
     }
 
-     public Flux<String> generateAndSaveCodeStream(String userMessage,CodeGenTypeEnum codeGenTypeEnum) {
+
+    public Flux<String> generateAndSaveCodeStream(String userMessage,CodeGenTypeEnum codeGenTypeEnum) {
         if(codeGenTypeEnum == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR,"生成类型不能为空");
         }
