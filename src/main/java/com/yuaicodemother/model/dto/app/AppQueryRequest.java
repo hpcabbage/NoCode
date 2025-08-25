@@ -1,11 +1,14 @@
-package com.yuaicodemother.model.vo;
+package com.yuaicodemother.model.dto.app;
 
+import com.yuaicodemother.common.PageRequest;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
+
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class AppVO implements Serializable {
+public class AppQueryRequest extends PageRequest implements Serializable {
 
     /**
      * id
@@ -38,11 +41,6 @@ public class AppVO implements Serializable {
     private String deployKey;
 
     /**
-     * 部署时间
-     */
-    private LocalDateTime deployedTime;
-
-    /**
      * 优先级
      */
     private Integer priority;
@@ -52,20 +50,6 @@ public class AppVO implements Serializable {
      */
     private Long userId;
 
-    /**
-     * 创建时间
-     */
-    private LocalDateTime createTime;
-
-    /**
-     * 更新时间
-     */
-    private LocalDateTime updateTime;
-
-    /**
-     * 创建用户信息
-     */
-    private UserVO user;
-
     private static final long serialVersionUID = 1L;
 }
+

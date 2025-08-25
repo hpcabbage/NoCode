@@ -6,6 +6,7 @@ import com.yuaicodemother.common.DeleteRequest;
 import com.yuaicodemother.common.ResultUtils;
 import com.yuaicodemother.model.dto.app.AppAddRequest;
 import com.yuaicodemother.model.dto.app.AppUpdateRequest;
+import com.yuaicodemother.model.vo.AppVO;
 import com.yuaicodemother.service.AppService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
@@ -40,5 +41,16 @@ public class AppController {
         return ResultUtils.success(result);
     }
 
+    /**
+     * 根据 id 获取应用详情
+     * @param id
+     * @return 应用详情
+     */
+    @GetMapping("/get/vo")
+    public BaseResponse<AppVO> getAppVOById(long id) {
+        App app = appService.getById(id);
+        AppVO appVO = appService.getAppVO(app);
+        return ResultUtils.success(appVO);
+    }
 
 }
