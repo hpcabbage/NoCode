@@ -10,11 +10,11 @@ public class CodeFileSaveExecutor {
     private static final HtmlCodeFileSaveTemplate htmlCodeFileSaveTemplate = new HtmlCodeFileSaveTemplate();
     private static final MultiFileCodeFileSaverTemplate multiFileCodeFileSaverTemplate = new MultiFileCodeFileSaverTemplate();
 
-    public static File executeSave(Object result, CodeGenTypeEnum codeGenType) {
+    public static File executeSave(Object result, CodeGenTypeEnum codeGenType,Long appId) {
         return switch(codeGenType)
         {
-            case HTML -> htmlCodeFileSaveTemplate.saveCode((HtmlCodeResult) result);
-            case MULTI_FILE -> multiFileCodeFileSaverTemplate.saveCode((MultiFileCodeResult) result);
+            case HTML -> htmlCodeFileSaveTemplate.saveCode((HtmlCodeResult) result,appId);
+            case MULTI_FILE -> multiFileCodeFileSaverTemplate.saveCode((MultiFileCodeResult) result,appId);
             default -> throw new RuntimeException("不支持的生成模式");
         };
     }

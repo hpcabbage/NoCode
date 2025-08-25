@@ -17,11 +17,11 @@ public abstract class CodeFileSaveTemplate<T> {
      * 模板保存方法
      * @param result
      */
-    public final File saveCode(T result) {
+    public final File saveCode(T result, Long appId) {
         //1.验证参数是否合理
         validateResult(result);
         //2.构建文件保存目录
-        String baseDirPath = buildUniqueDir();
+        String baseDirPath = buildUniqueDir(appId);
         //3.保存文件
         saveFiles(result, baseDirPath);
         //4.返回保存的目录
@@ -43,9 +43,12 @@ public abstract class CodeFileSaveTemplate<T> {
      * @return 目录路径
      */
     //被final 修饰，不能被继承重写，即这个方法就是最终方法
-    protected final String buildUniqueDir() {
+    protected final String buildUniqueDir(Long appId) {
+        if(appId == null) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "appId不能为空");
+        }
         String codeType = getCodeType().getValue();
-        String uniqueDirName = StrUtil.format("{}_{}",codeType, IdUtil.getSnowflake());
+        String uniqueDirName = StrUtil.format("{}_{}",codeType, appId);
         String dirPath = FILE_SAVE_ROOT_PATH + File.separator + uniqueDirName;
         FileUtil.mkdir(dirPath);
         return dirPath;

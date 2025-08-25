@@ -34,7 +34,7 @@ class YuAiCodeMotherApplicationTests {
 
     @Test
     void generaterFluxCode() {
-        Flux<String> codeStream = aiCodeGeneratorFacade.generateAndSaveCodeStream("生成一个向大家介绍acm的", CodeGenTypeEnum.MULTI_FILE);
+        Flux<String> codeStream = aiCodeGeneratorFacade.generateAndSaveCodeStream("生成一个向大家介绍acm的", CodeGenTypeEnum.MULTI_FILE,1L);
         List<String> allChunks = codeStream.collectList().block(Duration.ofSeconds(300));
         for(String chunk : allChunks) {
             System.out.println(chunk);
