@@ -1,11 +1,13 @@
 package com.yuaicodemother.service;
 
+import com.mybatisflex.core.service.IService;
 import com.yuaicodemother.model.dto.app.AppAddRequest;
 import com.yuaicodemother.model.dto.app.AppUpdateRequest;
 import com.yuaicodemother.model.entity.App;
+import com.yuaicodemother.model.entity.User;
 import jakarta.servlet.http.HttpServletRequest;
 
-public interface AppService {
+public interface AppService extends IService<App> {
     Long addApp(AppAddRequest appAddRequest, HttpServletRequest  request);
 
     boolean save(App app);

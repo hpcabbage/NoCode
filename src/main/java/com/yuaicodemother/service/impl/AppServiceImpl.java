@@ -1,9 +1,13 @@
 package com.yuaicodemother.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.mybatisflex.spring.service.impl.ServiceImpl;
 import com.yuaicodemother.ai.enums.CodeGenTypeEnum;
+import com.yuaicodemother.exception.BusinessException;
 import com.yuaicodemother.exception.ErrorCode;
 import com.yuaicodemother.exception.ThrowUtils;
+import com.yuaicodemother.mapper.AppMapper;
+import com.yuaicodemother.mapper.UserMapper;
 import com.yuaicodemother.model.dto.app.AppAddRequest;
 import com.yuaicodemother.model.dto.app.AppUpdateRequest;
 import com.yuaicodemother.model.entity.App;
@@ -14,8 +18,10 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 @Service
-public class AppServiceImpl implements AppService {
+public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppService {
     @Resource
     private UserService userService;
     @Override
@@ -44,6 +50,25 @@ public class AppServiceImpl implements AppService {
 
     @Override
     public void updateApp(AppUpdateRequest appUpdateRequest, HttpServletRequest request) {
-
+        if(appUpdateRequest == null || appUpdateRequest.getId() == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User user = userService.getLoginUser(request);
+        Long id = appUpdateRequest.getId();
+        App oldApp = this.getById(id);
+        if (oldApp == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+        // 如果更新的不是自己的应用
+        if (!oldApp.getUserId().equals(user.getId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
+        App app = new App();
+        app.setId(id);
+        app.setAppName(appUpdateRequest.getAppName());
+        //编辑时间手动更新
+        app.setEditTime(LocalDateTime.now());
+        boolean result = this.updateById(app);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
     }
 }
