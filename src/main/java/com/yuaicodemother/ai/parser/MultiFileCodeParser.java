@@ -1,51 +1,21 @@
-package com.yuaicodemother.core;
+package com.yuaicodemother.ai.parser;
 
-import com.yuaicodemother.ai.model.HtmlCodeResult;
 import com.yuaicodemother.ai.model.MultiFileCodeResult;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class CodeParser {
+public class MultiFileCodeParser implements CodeParser<MultiFileCodeResult>{
     private static final Pattern HTML_CODE_PATTERN = Pattern.compile("```html\\s*\\n([\\s\\S]*?)```", Pattern.CASE_INSENSITIVE);
     private static final Pattern CSS_CODE_PATTERN = Pattern.compile("```css\\s*\\n([\\s\\S]*?)```", Pattern.CASE_INSENSITIVE);
     private static final Pattern JS_CODE_PATTERN = Pattern.compile("```(?:js|javascript)\\s*\\n([\\s\\S]*?)```", Pattern.CASE_INSENSITIVE);
-
-    /**
-     * 解析HTML代码
-     * @param codeContent
-     * @return
-     */
-    public static HtmlCodeResult parseHtmlCode(String codeContent) {
-        HtmlCodeResult result = new HtmlCodeResult();
-        String htmlCode = extracHtmlCode(codeContent);
-        if(htmlCode != null && !htmlCode.trim().isEmpty()) {
-            result.setHtmlCode(htmlCode.trim());
-        } else {
-            // 如果没有匹配到HTML代码，则将整个消息作为HTML代码
-            result.setHtmlCode(codeContent.trim());
-        }
-        return result;
-    }
-    /**
-     * 根据正则表达式提取代码
-     * @param message
-     * @return
-     */
-    private static String extracHtmlCode(String message) {
-        Matcher matcher = HTML_CODE_PATTERN.matcher(message);
-        if (matcher.find()) {
-            return matcher.group(1);
-        }
-        return null;
-    }
-
     /**
      * 解析多个文件代码
      * @param codeContent
      * @return
      */
-    public static MultiFileCodeResult parseMultiFileCode(String codeContent) {
+    @Override
+    public MultiFileCodeResult parserCode(String codeContent) {
         MultiFileCodeResult result = new MultiFileCodeResult();
         String htmlCode = extractCodeByPattern(codeContent,HTML_CODE_PATTERN);
         String cssCode = extractCodeByPattern(codeContent,CSS_CODE_PATTERN);
@@ -62,13 +32,14 @@ public class CodeParser {
         return result;
     }
 
+
     /**
      * 根绝不同的正则模式提起代码(策略模式）
      * @param message
      * @param pattern
      * @return
      */
-    private static String extractCodeByPattern(String message,Pattern pattern) {
+    private String extractCodeByPattern(String message,Pattern pattern) {
         Matcher matcher = pattern.matcher(message);
         if (matcher.find()) {
             return matcher.group(1);

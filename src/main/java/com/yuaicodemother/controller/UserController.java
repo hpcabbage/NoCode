@@ -1,7 +1,7 @@
 package com.yuaicodemother.controller;
 
-import com.yuaicodemother.Exception.ErrorCode;
-import com.yuaicodemother.Exception.ThrowUtils;
+import com.yuaicodemother.exception.ErrorCode;
+import com.yuaicodemother.exception.ThrowUtils;
 import com.yuaicodemother.common.BaseResponse;
 import com.yuaicodemother.common.ResultUtils;
 import com.yuaicodemother.model.dto.user.UserLoginRequest;
@@ -11,7 +11,6 @@ import com.yuaicodemother.model.vo.LoginUserVO;
 import com.yuaicodemother.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.*;
 
 /**

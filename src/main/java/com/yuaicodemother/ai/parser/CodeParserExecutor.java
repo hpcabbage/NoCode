@@ -1,8 +1,6 @@
-package com.yuaicodemother.parser;
+package com.yuaicodemother.ai.parser;
 
 import com.yuaicodemother.ai.enums.CodeGenTypeEnum;
-
-import java.io.File;
 
 public class CodeParserExecutor {
     private static final HtmlCodeParser  htmlCodeParser = new HtmlCodeParser();

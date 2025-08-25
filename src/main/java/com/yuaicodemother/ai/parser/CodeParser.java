@@ -1,4 +1,4 @@
-package com.yuaicodemother.parser;
+package com.yuaicodemother.ai.parser;
 
 /**
  * 代码解析器策略模式接口

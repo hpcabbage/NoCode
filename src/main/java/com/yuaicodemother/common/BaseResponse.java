@@ -1,6 +1,6 @@
 package com.yuaicodemother.common;
 
-import com.yuaicodemother.Exception.ErrorCode;
+import com.yuaicodemother.exception.ErrorCode;
 import lombok.Data;
 
 import java.io.Serializable;

@@ -2,11 +2,10 @@ package com.yuaicodemother.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
-import com.mybatisflex.core.BaseMapper;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
-import com.yuaicodemother.Exception.BusinessException;
-import com.yuaicodemother.Exception.ErrorCode;
+import com.yuaicodemother.exception.BusinessException;
+import com.yuaicodemother.exception.ErrorCode;
 import com.yuaicodemother.mapper.UserMapper;
 import com.yuaicodemother.model.dto.user.UserQueryRequest;
 import com.yuaicodemother.model.entity.User;

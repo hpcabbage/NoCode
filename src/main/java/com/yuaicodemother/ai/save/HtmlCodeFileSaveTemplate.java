@@ -1,4 +1,4 @@
-package com.yuaicodemother.save;
+package com.yuaicodemother.ai.save;
 
 import com.yuaicodemother.ai.enums.CodeGenTypeEnum;
 import com.yuaicodemother.ai.model.HtmlCodeResult;

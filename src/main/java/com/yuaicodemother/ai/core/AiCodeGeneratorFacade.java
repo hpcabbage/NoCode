@@ -1,14 +1,14 @@
-package com.yuaicodemother.core;
+package com.yuaicodemother.ai.core;
 
 
-import com.yuaicodemother.Exception.BusinessException;
-import com.yuaicodemother.Exception.ErrorCode;
+import com.yuaicodemother.exception.BusinessException;
+import com.yuaicodemother.exception.ErrorCode;
 import com.yuaicodemother.ai.AiCodeGeneratorService;
 import com.yuaicodemother.ai.enums.CodeGenTypeEnum;
 import com.yuaicodemother.ai.model.HtmlCodeResult;
 import com.yuaicodemother.ai.model.MultiFileCodeResult;
-import com.yuaicodemother.parser.CodeParserExecutor;
-import com.yuaicodemother.save.CodeFileSaveExecutor;
+import com.yuaicodemother.ai.parser.CodeParserExecutor;
+import com.yuaicodemother.ai.save.CodeFileSaveExecutor;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

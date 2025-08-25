@@ -1,7 +1,7 @@
 package com.yuaicodemother.aop;
 
-import com.yuaicodemother.Exception.BusinessException;
-import com.yuaicodemother.Exception.ErrorCode;
+import com.yuaicodemother.exception.BusinessException;
+import com.yuaicodemother.exception.ErrorCode;
 import com.yuaicodemother.annotation.AuthCheck;
 import com.yuaicodemother.model.entity.User;
 import com.yuaicodemother.model.enums.UserRoleEnum;
@@ -12,7 +12,6 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;

@@ -1,4 +1,4 @@
-package com.yuaicodemother.parser;
+package com.yuaicodemother.ai.parser;
 
 import com.yuaicodemother.ai.model.HtmlCodeResult;
 

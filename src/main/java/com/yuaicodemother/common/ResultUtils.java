@@ -1,6 +1,6 @@
 package com.yuaicodemother.common;
 
-import com.yuaicodemother.Exception.ErrorCode;
+import com.yuaicodemother.exception.ErrorCode;
 
 /**
  * 快速构造响应结果的工具类
