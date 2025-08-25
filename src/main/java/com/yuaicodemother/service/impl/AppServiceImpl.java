@@ -3,6 +3,8 @@ package com.yuaicodemother.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import com.yuaicodemother.ai.enums.CodeGenTypeEnum;
+import com.yuaicodemother.common.DeleteRequest;
+import com.yuaicodemother.constant.UserConstant;
 import com.yuaicodemother.exception.BusinessException;
 import com.yuaicodemother.exception.ErrorCode;
 import com.yuaicodemother.exception.ThrowUtils;
@@ -12,6 +14,8 @@ import com.yuaicodemother.model.dto.app.AppAddRequest;
 import com.yuaicodemother.model.dto.app.AppUpdateRequest;
 import com.yuaicodemother.model.entity.App;
 import com.yuaicodemother.model.entity.User;
+import com.yuaicodemother.model.vo.AppVO;
+import com.yuaicodemother.model.vo.UserVO;
 import com.yuaicodemother.service.AppService;
 import com.yuaicodemother.service.UserService;
 import jakarta.annotation.Resource;
@@ -70,5 +74,38 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         app.setEditTime(LocalDateTime.now());
         boolean result = this.updateById(app);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+    }
+
+    @Override
+    public Boolean deleteApp(DeleteRequest deleteRequest, HttpServletRequest request) {
+        if(deleteRequest == null || deleteRequest.getId() == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        User loginUser = userService.getLoginUser(request);
+        Long id = deleteRequest.getId();
+        App Oldapp = this.getById(id);
+        ThrowUtils.throwIf(Oldapp == null, ErrorCode.NOT_FOUND_ERROR);
+        // 只有自己或者管理员才能删除应用
+        if (!Oldapp.getUserId().equals(loginUser.getId()) && !UserConstant.ADMIN_ROLE.equals(loginUser.getUserRole())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        }
+        boolean result = this.removeById(id);
+        return result;
+    }
+
+    @Override
+    public AppVO getAppVO(App app) {
+        if(app == null) {
+            return null;
+        }
+        AppVO appVO = new AppVO();
+        BeanUtil.copyProperties(app, appVO);
+        Long userId = app.getUserId();
+        if(userId != null) {
+            User user = userService.getById(userId);
+            UserVO userVo = new UserVO();
+            BeanUtil.copyProperties(user, userVo);
+        }
+        return null;
     }
 }
