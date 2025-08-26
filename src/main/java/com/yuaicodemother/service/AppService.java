@@ -33,4 +33,6 @@ public interface AppService extends IService<App> {
     Page<AppVO> listMyAppVOByPage(AppQueryRequest appQueryRequest, HttpServletRequest request);
 
     Flux<String> chatToGenCode(Long appId ,String userMessage, User loginUser);
+
+    String deployApp(Long appId, User loginUser);
 }

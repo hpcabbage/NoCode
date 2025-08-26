@@ -3,6 +3,7 @@ package com.yuaicodemother.ai.save;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
+import com.yuaicodemother.constant.AppConstant;
 import com.yuaicodemother.exception.BusinessException;
 import com.yuaicodemother.exception.ErrorCode;
 import com.yuaicodemother.ai.enums.CodeGenTypeEnum;
@@ -12,7 +13,10 @@ import java.nio.charset.StandardCharsets;
 
 public abstract class CodeFileSaveTemplate<T> {
     // 文件保存目录
-    private static final String FILE_SAVE_ROOT_PATH = System.getProperty("user.dir") + "/tmp/code_output";
+    // 文件保存根目录
+    protected static final String FILE_SAVE_ROOT_DIR = AppConstant.CODE_OUTPUT_ROOT_DIR;
+
+
     /**
      * 模板保存方法
      * @param result
@@ -49,7 +53,7 @@ public abstract class CodeFileSaveTemplate<T> {
         }
         String codeType = getCodeType().getValue();
         String uniqueDirName = StrUtil.format("{}_{}",codeType, appId);
-        String dirPath = FILE_SAVE_ROOT_PATH + File.separator + uniqueDirName;
+        String dirPath = FILE_SAVE_ROOT_DIR + File.separator + uniqueDirName;
         FileUtil.mkdir(dirPath);
         return dirPath;
     }
@@ -61,7 +65,7 @@ public abstract class CodeFileSaveTemplate<T> {
      * @param content
      */
     protected final void writeToFile(String dirPath,String filename,String content) {
-        if(StrUtil.isBlank(content)) {
+        if(!StrUtil.isBlank(content)) {
             String path = dirPath + File.separator + filename;
             FileUtil.writeString(content,path, StandardCharsets.UTF_8);
         }
