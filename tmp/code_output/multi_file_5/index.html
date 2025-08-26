@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>响应式轮播图网站</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">网站名称</div>
+            <ul class="nav-menu">
+                <li class="nav-item"><a href="#" class="nav-link">首页</a></li>
+                <li class="nav-item"><a href="#" class="nav-link">关于</a></li>
+                <li class="nav-item"><a href="#" class="nav-link">服务</a></li>
+                <li class="nav-item"><a href="#" class="nav-link">联系</a></li>
+            </ul>
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 轮播图部分 -->
+    <section class="carousel-section">
+        <div class="carousel-container">
+            <div class="carousel">
+                <div class="carousel-slide active">
+                    <img src="https://picsum.photos/1200/600?random=1" alt="轮播图1">
+                    <div class="slide-content">
+                        <h2>欢迎来到我们的网站</h2>
+                        <p>探索更多精彩内容</p>
+                        <button class="cta-button">了解更多</button>
+                    </div>
+                </div>
+                <div class="carousel-slide">
+                    <img src="https://picsum.photos/1200/600?random=2" alt="轮播图2">
+                    <div class="slide-content">
+                        <h2>优质服务</h2>
+                        <p>我们提供专业的解决方案</p>
+                        <button class="cta-button">查看服务</button>
+                    </div>
+                </div>
+                <div class="carousel-slide">
+                    <img src="https://picsum.photos/1200/600?random=3" alt="轮播图3">
+                    <div class="slide-content">
+                        <h2>联系我们</h2>
+                        <p>随时为您提供帮助</p>
+                        <button class="cta-button">联系团队</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 轮播图控制按钮 -->
+            <button class="carousel-control prev">&#10094;</button>
+            <button class="carousel-control next">&#10095;</button>
+            
+            <!-- 轮播图指示器 -->
+            <div class="carousel-indicators">
+                <span class="indicator active" data-slide="0"></span>
+                <span class="indicator" data-slide="1"></span>
+                <span class="indicator" data-slide="2"></span>
+            </div>
+        </div>
+    </section>
+
+    <!-- 内容区域 -->
+    <main class="content">
+        <section class="intro">
+            <h2>关于我们</h2>
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam in dui mauris. Vivamus hendrerit arcu sed erat molestie vehicula. Sed auctor neque eu tellus rhoncus ut eleifend nibh porttitor.</p>
+        </section>
+        
+        <section class="features">
+            <h2>我们的服务</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>网站设计</h3>
+                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam in dui mauris.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>应用开发</h3>
+                    <p>Vivamus hendrerit arcu sed erat molestie vehicula. Sed auctor neque eu tellus.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>数字营销</h3>
+                    <p>Ut eleifend nibh porttitor. Nullam in dui mauris. Vivamus hendrerit arcu.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+        <p>&copy; 2023 网站名称. 保留所有权利.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

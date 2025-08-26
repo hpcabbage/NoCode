@@ -14,6 +14,7 @@ import com.yuaicodemother.model.vo.AppVO;
 import jakarta.servlet.http.HttpServletRequest;
 import reactor.core.publisher.Flux;
 
+import java.io.Serializable;
 import java.util.List;
 
 public interface AppService extends IService<App> {
@@ -35,4 +36,6 @@ public interface AppService extends IService<App> {
     Flux<String> chatToGenCode(Long appId ,String userMessage, User loginUser);
 
     String deployApp(Long appId, User loginUser);
+
+    boolean removeById(Serializable id);
 }

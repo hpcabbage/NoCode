@@ -32,10 +32,12 @@ import com.yuaicodemother.service.ChatHistoryService;
 import com.yuaicodemother.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
 import java.io.File;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +46,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppService {
     @Resource
     private UserService userService;
@@ -278,6 +281,23 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         return String.format("%s/%s/", AppConstant.CODE_DEPLOY_HOST, deployKey);
     }
 
+    @Override
+    public boolean removeById(Serializable id) {
+        // 1. 获取应用信息
+        if(id == null) {
+            return false;
+        }
+        Long appId = Long.valueOf(id.toString());
+        if(appId <= 0) {
+            return false;
+        }
+        try {
+            chatHistoryService.deleteyAppId(appId);
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "删除应用失败：" + e.getMessage());
+        }
+        return super.removeById(id);
+    }
 
 
 }
