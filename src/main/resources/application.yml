@@ -6,6 +6,12 @@ spring:
     url: jdbc:mysql://175.27.255.222:3306/yu_ai_code_mother
     username: ai_code
     password: 050312+Qq
+  data:
+    redis:
+      host: 175.27.255.222
+      port: 6379
+      password: root
+      ttl: 3600
 server:
   port: 8123
   servlet:
