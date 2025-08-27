@@ -2,6 +2,7 @@ package com.yuaicodemother.ai;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.yuaicodemother.service.ChatHistoryService;
 import dev.langchain4j.community.store.memory.chat.redis.RedisChatMemoryStore;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
@@ -24,6 +25,8 @@ public class AiCodeGeneratorServiceFactory {
     private StreamingChatModel streamingChatModel;
     @Resource
     private RedisChatMemoryStore redisChatMemoryStore;
+    @Resource
+    private ChatHistoryService chatHistoryService;
 
     private final Cache<Long, AiCodeGeneratorService> serviceCache = Caffeine.newBuilder()
             .maximumSize(100)
@@ -50,6 +53,7 @@ public class AiCodeGeneratorServiceFactory {
                 .chatMemoryStore(redisChatMemoryStore)
                 .maxMessages(20)
                 .build();
+        chatHistoryService.loadChatHistoryCountToMemory(appId, chatMemory, 20);
         return AiServices.builder(AiCodeGeneratorService.class)
                 .chatModel(chatModel)
                 .streamingChatModel(streamingChatModel)
