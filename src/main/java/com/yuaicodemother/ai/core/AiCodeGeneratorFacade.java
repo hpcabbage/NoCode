@@ -1,6 +1,7 @@
 package com.yuaicodemother.ai.core;
 
 
+import com.yuaicodemother.ai.AiCodeGeneratorServiceFactory;
 import com.yuaicodemother.exception.BusinessException;
 import com.yuaicodemother.exception.ErrorCode;
 import com.yuaicodemother.ai.AiCodeGeneratorService;
@@ -20,7 +21,7 @@ import java.io.File;
 @Slf4j
 public class AiCodeGeneratorFacade {
     @Resource
-    private AiCodeGeneratorService aiCodeGeneratorService;
+    private AiCodeGeneratorServiceFactory aiCodeGeneratorServiceFactory;
 
     /**
      * 统一入口：根据类型生成并保存代码 8ue
@@ -29,6 +30,8 @@ public class AiCodeGeneratorFacade {
      * @return
      */
     public File generateAndSaveCode(String userMessage,CodeGenTypeEnum codeGenTypeEnum,Long appId) {
+        AiCodeGeneratorService aiCodeGeneratorService =
+                aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId);
         if(codeGenTypeEnum == null) throw new BusinessException(ErrorCode.PARAMS_ERROR,"生成类型不能为空");
         return switch(codeGenTypeEnum) {
             case HTML-> {
@@ -75,6 +78,8 @@ public class AiCodeGeneratorFacade {
 
 
     public Flux<String> generateAndSaveCodeStream(String userMessage,CodeGenTypeEnum codeGenTypeEnum,Long appId) {
+        AiCodeGeneratorService aiCodeGeneratorService =
+                aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId);
         if(codeGenTypeEnum == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR,"生成类型不能为空");
         }
