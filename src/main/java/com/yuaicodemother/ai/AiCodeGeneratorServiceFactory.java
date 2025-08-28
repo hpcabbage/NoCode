@@ -20,7 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
+
 
 import java.time.Duration;
 
@@ -29,9 +29,8 @@ import java.time.Duration;
 public class AiCodeGeneratorServiceFactory {
     @Resource
     private ChatModel chatModel;
-    @Qualifier("openAiStreamingChatModel")
     @Resource
-    private StreamingChatModel openAistreamingChatModel;
+    private StreamingChatModel openAiStreamingChatModel;
     @Resource
     private StreamingChatModel reasoningStreamingChatModel;
     @Resource
@@ -78,16 +77,20 @@ public class AiCodeGeneratorServiceFactory {
      * @return
      */
 
-    public AiCodeGeneratorService createAiCodeGeneratorService(Long appId, CodeGenTypeEnum codeGenType) {
-        log.info("为 appId: {} 创建新的AI 服务实例",appId);
+    /**
+     * 创建新的 AI 服务实例
+     */
+    private AiCodeGeneratorService createAiCodeGeneratorService(long appId, CodeGenTypeEnum codeGenType) {
+        // 根据 appId 构建独立的对话记忆
         MessageWindowChatMemory chatMemory = MessageWindowChatMemory
                 .builder()
                 .id(appId)
                 .chatMemoryStore(redisChatMemoryStore)
                 .maxMessages(20)
                 .build();
-        // 将数据库中加载历史数据到历史记忆中
+        // 从数据库加载历史对话到记忆中
         chatHistoryService.loadChatHistoryCountToMemory(appId, chatMemory, 20);
+        // 根据代码生成类型选择不同的模型配置
         return switch (codeGenType) {
             // Vue 项目生成使用推理模型
             case VUE -> AiServices.builder(AiCodeGeneratorService.class)
@@ -101,14 +104,14 @@ public class AiCodeGeneratorServiceFactory {
             // HTML 和多文件生成使用默认模型
             case HTML, MULTI_FILE -> AiServices.builder(AiCodeGeneratorService.class)
                     .chatModel(chatModel)
-                    .streamingChatModel(openAistreamingChatModel)
+                    .streamingChatModel(openAiStreamingChatModel)
                     .chatMemory(chatMemory)
                     .build();
             default -> throw new BusinessException(ErrorCode.SYSTEM_ERROR,
                     "不支持的代码生成类型: " + codeGenType.getValue());
         };
-
     }
+
     @Bean
     public AiCodeGeneratorService createAiCodeGeneratorService() {
         return getAiCodeGeneratorService(0L);
