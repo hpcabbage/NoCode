@@ -24,7 +24,7 @@ public class AiCodeGeneratorFacade {
     private AiCodeGeneratorServiceFactory aiCodeGeneratorServiceFactory;
 
     /**
-     * 统一入口：根据类型生成并保存代码 8ue
+     * 统一入口：根据类型生成并保存代码
      * @param userMessage
      * @param codeGenTypeEnum
      * @return
@@ -84,6 +84,10 @@ public class AiCodeGeneratorFacade {
             throw new BusinessException(ErrorCode.PARAMS_ERROR,"生成类型不能为空");
         }
         return switch(codeGenTypeEnum) {
+            case VUE -> {
+                Flux<String> result = aiCodeGeneratorService.generateVueProjectCodeStream(appId,userMessage);
+                yield processCodeStream(result,codeGenTypeEnum,appId);
+            }
             case HTML -> {
                 Flux<String> result = aiCodeGeneratorService.generateHtmlCodeStream(userMessage);
                 yield processCodeStream(result,codeGenTypeEnum,appId);
