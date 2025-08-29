@@ -4,10 +4,13 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.yuaicodemother.ai.core.VueProjectBuilder;
 import com.yuaicodemother.ai.model.message.*;
+import com.yuaicodemother.constant.AppConstant;
 import com.yuaicodemother.model.entity.User;
 import com.yuaicodemother.model.enums.ChatHistoryMessageTypeEnum;
 import com.yuaicodemother.service.ChatHistoryService;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
@@ -33,6 +36,8 @@ public class JsonMessageStreamHandler {
      * @param loginUser          登录用户
      * @return 处理后的流
      */
+    @Resource
+    private VueProjectBuilder vueProjectBuilder;
     public Flux<String> handle(Flux<String> originFlux,
                                ChatHistoryService chatHistoryService,
                                long appId, User loginUser) {
@@ -50,6 +55,9 @@ public class JsonMessageStreamHandler {
                     // 流式响应完成后，添加 AI 消息到对话历史
                     String aiResponse = chatHistoryStringBuilder.toString();
                     chatHistoryService.addChatHistory(appId, aiResponse, ChatHistoryMessageTypeEnum.AI.getValue(), loginUser.getId());
+                    // 异步构造VUE项目
+                    String vueProjectPath = AppConstant.CODE_OUTPUT_ROOT_DIR + "/vue_project" + appId;
+                    vueProjectBuilder.buildProjectAsync(vueProjectPath);
                 })
                 .doOnError(error -> {
                     // 如果AI回复失败，也要记录错误消息

@@ -2,12 +2,28 @@ package com.yuaicodemother.ai.core;
 
 import cn.hutool.core.util.RuntimeUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 
+@Component
 @Slf4j
 public class VueProjectBuilder {
+
+    public CompletableFuture<Void> buildProjectAsync(String projectPath) {
+        return CompletableFuture.runAsync(() -> {
+            try {
+                buildProject(projectPath);
+            } catch (Exception e) {
+                log.error("异步构建 Vue 项目时发生异常: {}", e.getMessage(), e);
+                throw new RuntimeException(e); // 重新抛出以便 exceptionally 捕获
+            }
+        });
+    }
+
     /**
      * 执行通用命令
      * @param workingDir

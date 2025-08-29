@@ -9,6 +9,7 @@ import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import com.yuaicodemother.ai.core.AiCodeGeneratorFacade;
+import com.yuaicodemother.ai.core.VueProjectBuilder;
 import com.yuaicodemother.ai.core.handler.StreamHandlerExecutor;
 import com.yuaicodemother.ai.enums.CodeGenTypeEnum;
 import com.yuaicodemother.common.DeleteRequest;
@@ -57,6 +58,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
     private ChatHistoryService chatHistoryService;
     @Resource
     private StreamHandlerExecutor streamHandlerExecutor;
+    @Resource
+    private VueProjectBuilder vueProjectBuilder;
     @Override
     public Long addApp(AppAddRequest appAddRequest, HttpServletRequest request) {
         // 参数校验
@@ -221,7 +224,6 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         // 5. 调用 AI 生成代码,生成流式的代码
         Flux<String> codeStream = aiCodeGeneratorFacade.generateAndSaveCodeStream(message, codeGenTypeEnum, appId);
 
-
         return streamHandlerExecutor.doExecute(codeStream, chatHistoryService, appId, loginUser, codeGenTypeEnum);
     }
 
@@ -251,6 +253,16 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         File sourceDir = new File(sourceDirPath);
         if (!sourceDir.exists() || !sourceDir.isDirectory()) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "应用代码不存在，请先生成代码");
+        }
+        CodeGenTypeEnum codeGenTypeEnum = CodeGenTypeEnum.getEnumByValue(codeGenType);
+        if(codeGenTypeEnum == CodeGenTypeEnum.VUE) {
+            boolean buildSuccess = vueProjectBuilder.buildProject(sourceDirPath);
+            ThrowUtils.throwIf(!buildSuccess, ErrorCode.SYSTEM_ERROR, "构建 Vue 项目失败");
+            //检查dist目录是否存在
+            File distDir = new File(sourceDirPath , "dist");
+            ThrowUtils.throwIf(!distDir.exists() || !distDir.isDirectory(), ErrorCode.SYSTEM_ERROR, "构建 Vue 项目失败");
+            sourceDir = distDir;
+            log.info("VUE项目构建完成，dist 目录已生成: {}", distDir.getAbsolutePath());
         }
         // 7. 复制文件到部署目录
         String deployDirPath = AppConstant.CODE_DEPLOY_ROOT_DIR + File.separator + deployKey;
