@@ -4,6 +4,7 @@ import com.yuaicodemother.ai.AiCodeGeneratorService;
 import com.yuaicodemother.ai.enums.CodeGenTypeEnum;
 import com.yuaicodemother.ai.model.MultiFileCodeResult;
 import com.yuaicodemother.ai.core.AiCodeGeneratorFacade;
+import com.yuaicodemother.utils.WebScreenshotUtils;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -55,5 +56,13 @@ class YuAiCodeMotherApplicationTests {
         String completeContent = String.join("", result);
         Assertions.assertNotNull(completeContent);
     }
+
+
+        @Test
+        void saveWebPageScreenshot() {
+            String testUrl = "https://www.codefather.cn";
+            String webPageScreenshot = WebScreenshotUtils.saveWebPageScreenshot(testUrl);
+            Assertions.assertNotNull(webPageScreenshot);
+        }
 
 }

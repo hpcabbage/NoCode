@@ -53,3 +53,9 @@ langchain4j:
       max-tokens: 8192
       log-requests: true
       log-responses: true
+
+minio:
+  endpoint: http://115.190.148.238:9000
+  accessKey: admin
+  secretKey: 050312+Qq
+  bucketName: ai-images
