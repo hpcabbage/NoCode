@@ -300,7 +300,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
                 updateApp.setId(appId);
                 updateApp.setCover(screenshotUrl);
                 boolean updated = this.updateById(updateApp);
-                ThrowUtils.throwIf(updated, ErrorCode.OPERATION_ERROR, "更新应用封面失败");
+                ThrowUtils.throwIf(!updated, ErrorCode.OPERATION_ERROR, "更新应用封面失败");
             } catch (Exception e) {
                 log.error("异步构建应用封面时发生异常: {}", e.getMessage(), e);
                 throw new RuntimeException(e); // 重新抛出以便 exceptionally 捕获
