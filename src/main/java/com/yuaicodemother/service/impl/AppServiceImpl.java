@@ -31,6 +31,7 @@ import com.yuaicodemother.model.vo.AppVO;
 import com.yuaicodemother.model.vo.UserVO;
 import com.yuaicodemother.service.AppService;
 import com.yuaicodemother.service.ChatHistoryService;
+import com.yuaicodemother.service.ScreenshotService;
 import com.yuaicodemother.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
@@ -45,6 +46,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -60,6 +62,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
     private StreamHandlerExecutor streamHandlerExecutor;
     @Resource
     private VueProjectBuilder vueProjectBuilder;
+    @Resource
+    private ScreenshotService screenshotService;
     @Override
     public Long addApp(AppAddRequest appAddRequest, HttpServletRequest request) {
         // 参数校验
@@ -278,8 +282,30 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         updateApp.setDeployedTime(LocalDateTime.now());
         boolean updateResult = this.updateById(updateApp);
         ThrowUtils.throwIf(!updateResult, ErrorCode.OPERATION_ERROR, "更新应用部署信息失败");
-        // 9. 返回可访问的 URL
-        return String.format("%s/%s/", AppConstant.CODE_DEPLOY_HOST, deployKey);
+        // 10. 构建应用访问 URL
+        String appDeployUrl = String.format("%s/%s/", AppConstant.CODE_DEPLOY_HOST, deployKey);
+        // 11. 异步生成截图并更新应用封面
+        log.info("开始生成应用封面，应用 ID: {}", appId);
+        generateAppScreenshotAsync(appId, appDeployUrl);
+        return appDeployUrl;
+    }
+
+
+    public CompletableFuture<Void> generateAppScreenshotAsync(Long appId,String appUrl) {
+        return CompletableFuture.runAsync(() -> {
+            try {
+                log.info("开始生成应用封面，应用 ID: {}", appId);
+                String screenshotUrl = screenshotService.generateAndUploadScreenshot(appUrl);
+                App updateApp = new App();
+                updateApp.setId(appId);
+                updateApp.setCover(screenshotUrl);
+                boolean updated = this.updateById(updateApp);
+                ThrowUtils.throwIf(updated, ErrorCode.OPERATION_ERROR, "更新应用封面失败");
+            } catch (Exception e) {
+                log.error("异步构建应用封面时发生异常: {}", e.getMessage(), e);
+                throw new RuntimeException(e); // 重新抛出以便 exceptionally 捕获
+            }
+        });
     }
 
     @Override

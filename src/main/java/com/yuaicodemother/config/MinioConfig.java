@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
 @Data
 @Configuration
 @Slf4j
-@ConfigurationProperties(prefix = "spring.minio")
+@ConfigurationProperties(prefix = "minio")
 public class MinioConfig {
 
     // Minio服务端点

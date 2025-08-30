@@ -28,12 +28,24 @@ import java.util.UUID;
 public class WebScreenshotUtils {
 
     private static final WebDriver webDriver;
+    private static final ThreadLocal<WebDriver> driverThreadLocal = new ThreadLocal<>();
+
+    //使用ThreadLocal存储驱动程序，避免多线程冲突
+    public static WebDriver getDriver() {
+        final int DEFAULT_WIDTH = 1600;
+        final int DEFAULT_HEIGHT = 900;
+        WebDriver driver = driverThreadLocal.get();
+        if (driver == null) {
+            driver = initChromeDriver(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+            driverThreadLocal.set(driver);
+        }
+        return driver;
+    }
+
 
     // 全局静态初始化，避免重复初始化驱动程序：
     static {
-        final int DEFAULT_WIDTH = 1600;
-        final int DEFAULT_HEIGHT = 900;
-        webDriver = initChromeDriver(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+        webDriver = getDriver();
     }
 
     /**
