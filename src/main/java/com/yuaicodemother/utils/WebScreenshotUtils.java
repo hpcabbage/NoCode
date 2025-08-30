@@ -27,33 +27,35 @@ import java.util.UUID;
 @Slf4j
 public class WebScreenshotUtils {
 
-    private static final WebDriver webDriver;
-    private static final ThreadLocal<WebDriver> driverThreadLocal = new ThreadLocal<>();
+    private static final ThreadLocal<WebDriver> DRIVER_THREAD_LOCAL = new ThreadLocal<>();
 
-    //使用ThreadLocal存储驱动程序，避免多线程冲突
-    public static WebDriver getDriver() {
-        final int DEFAULT_WIDTH = 1600;
-        final int DEFAULT_HEIGHT = 900;
-        WebDriver driver = driverThreadLocal.get();
+    /**
+     * 获取WebDriver实例（线程安全）
+     */
+    private static WebDriver getDriver() {
+        WebDriver driver = DRIVER_THREAD_LOCAL.get();
         if (driver == null) {
+            final int DEFAULT_WIDTH = 1600;
+            final int DEFAULT_HEIGHT = 900;
             driver = initChromeDriver(DEFAULT_WIDTH, DEFAULT_HEIGHT);
-            driverThreadLocal.set(driver);
+            DRIVER_THREAD_LOCAL.set(driver);
         }
         return driver;
     }
 
-
-    // 全局静态初始化，避免重复初始化驱动程序：
-    static {
-        webDriver = getDriver();
-    }
-
     /**
-     * 退出时销毁
+     * 清理当前线程的WebDriver资源
      */
-    @PreDestroy
-    public void destroy() {
-        webDriver.quit();
+    public static void cleanupDriver() {
+        WebDriver driver = DRIVER_THREAD_LOCAL.get();
+        if (driver != null) {
+            try {
+                driver.quit();
+            } catch (Exception e) {
+                log.warn("关闭WebDriver时发生异常", e);
+            }
+            DRIVER_THREAD_LOCAL.remove();
+        }
     }
 
     /**
@@ -68,8 +70,10 @@ public class WebScreenshotUtils {
             log.error("网页截图失败，url为空");
             return null;
         }
+        WebDriver webDriver = null;
         // 创建临时目录
         try {
+            webDriver = getDriver();
             String rootPath = System.getProperty("user.dir") + "/tmp/screenshots/" + UUID.randomUUID().toString().substring(0, 8);
             FileUtil.mkdir(rootPath);
             // 图片后缀
@@ -96,6 +100,9 @@ public class WebScreenshotUtils {
         } catch (Exception e) {
             log.error("网页截图失败：{}", webUrl, e);
             return null;
+        } finally {
+            // 每次使用后清理WebDriver，避免资源泄漏
+            cleanupDriver();
         }
     }
 
@@ -104,6 +111,7 @@ public class WebScreenshotUtils {
      */
     private static WebDriver initChromeDriver(int width, int height) {
         try {
+
             // 自动管理 ChromeDriver
             WebDriverManager.chromedriver().setup();
             // 配置 Chrome 选项
