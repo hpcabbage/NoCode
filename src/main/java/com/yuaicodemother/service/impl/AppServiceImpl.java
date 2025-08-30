@@ -8,6 +8,8 @@ import cn.hutool.core.util.StrUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
+import com.yuaicodemother.ai.AiCodeGenTypeRoutingService;
+import com.yuaicodemother.ai.AiCodeGenTypeRoutingServiceFactory;
 import com.yuaicodemother.ai.core.AiCodeGeneratorFacade;
 import com.yuaicodemother.ai.core.VueProjectBuilder;
 import com.yuaicodemother.ai.core.handler.StreamHandlerExecutor;
@@ -64,6 +66,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
     private VueProjectBuilder vueProjectBuilder;
     @Resource
     private ScreenshotService screenshotService;
+    @Resource
+    private AiCodeGenTypeRoutingService aiCodeGenTypeRoutingService;
     @Override
     public Long addApp(AppAddRequest appAddRequest, HttpServletRequest request) {
         // 参数校验
@@ -75,11 +79,13 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         BeanUtil.copyProperties(appAddRequest, app);
         app.setUserId(loginUser.getId());
         app.setAppName(initPrompt.substring(0,Math.min(initPrompt.length(),12)));
-        // 暂时设置成多文件生成
-        app.setCodeGenType(CodeGenTypeEnum.VUE.getValue());
+        // 使用AI智能选择代码生成类型
+        CodeGenTypeEnum codeGenTypeEnum = aiCodeGenTypeRoutingService.routeCodeGenType(initPrompt);
+        app.setCodeGenType(codeGenTypeEnum.getValue());
         //插入数据库
         boolean result = this.save(app);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        log.info("应用创建成功, ID: {}, 类型: {}",app.getId(),codeGenTypeEnum.getValue());
         return app.getId();
     }
 
@@ -121,8 +127,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         if (!Oldapp.getUserId().equals(loginUser.getId()) && !UserConstant.ADMIN_ROLE.equals(loginUser.getUserRole())) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
-        boolean result = this.removeById(id);
-        return result;
+        return this.removeById(id);
     }
 
     @Override
