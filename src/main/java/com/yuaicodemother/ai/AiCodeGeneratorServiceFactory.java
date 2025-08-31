@@ -3,10 +3,7 @@ package com.yuaicodemother.ai;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.yuaicodemother.ai.enums.CodeGenTypeEnum;
-import com.yuaicodemother.ai.tools.FileDeleteTool;
-import com.yuaicodemother.ai.tools.FileDirReadTool;
-import com.yuaicodemother.ai.tools.FileModifyTool;
-import com.yuaicodemother.ai.tools.FileWriteTool;
+import com.yuaicodemother.ai.tools.*;
 import com.yuaicodemother.exception.BusinessException;
 import com.yuaicodemother.exception.ErrorCode;
 import com.yuaicodemother.service.ChatHistoryService;
@@ -37,6 +34,8 @@ public class AiCodeGeneratorServiceFactory {
     private RedisChatMemoryStore redisChatMemoryStore;
     @Resource
     private ChatHistoryService chatHistoryService;
+    @Resource
+    private ToolManager toolManager;
 
     private final Cache<String, AiCodeGeneratorService> serviceCache = Caffeine.newBuilder()
             .maximumSize(100)
@@ -96,12 +95,7 @@ public class AiCodeGeneratorServiceFactory {
             case VUE -> AiServices.builder(AiCodeGeneratorService.class)
                     .streamingChatModel(reasoningStreamingChatModel)
                     .chatMemoryProvider(memoryId -> chatMemory)
-                    .tools(
-                            new FileDirReadTool(),
-                            new FileModifyTool(),
-                            new FileDeleteTool(),
-                            new FileWriteTool()
-                            )
+                    .tools(toolManager.getAllTools())
                     .hallucinatedToolNameStrategy(toolExecutionRequest -> ToolExecutionResultMessage.from(
                             toolExecutionRequest, "Error: there is no tool called " + toolExecutionRequest.name()
                     ))
