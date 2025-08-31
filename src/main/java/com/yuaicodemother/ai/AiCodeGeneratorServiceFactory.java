@@ -1,13 +1,12 @@
 package com.yuaicodemother.ai;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.yuaicodemother.ai.enums.CodeGenTypeEnum;
-import com.yuaicodemother.ai.tool.FileDeleteTool;
-import com.yuaicodemother.ai.tool.FileDirReadTool;
-import com.yuaicodemother.ai.tool.FileModifyTool;
-import com.yuaicodemother.ai.tool.FileWriteTool;
+import com.yuaicodemother.ai.tools.FileDeleteTool;
+import com.yuaicodemother.ai.tools.FileDirReadTool;
+import com.yuaicodemother.ai.tools.FileModifyTool;
+import com.yuaicodemother.ai.tools.FileWriteTool;
 import com.yuaicodemother.exception.BusinessException;
 import com.yuaicodemother.exception.ErrorCode;
 import com.yuaicodemother.service.ChatHistoryService;
@@ -19,8 +18,6 @@ import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.service.AiServices;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

@@ -1,4 +1,4 @@
-package com.yuaicodemother.ai.tool;
+package com.yuaicodemother.ai.tools;
 
 import cn.hutool.core.io.FileUtil;
 import com.yuaicodemother.constant.AppConstant;

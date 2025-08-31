@@ -1,4 +1,4 @@
-package com.yuaicodemother.ai.tool;
+package com.yuaicodemother.ai.tools;
 
 import com.yuaicodemother.constant.AppConstant;
 import dev.langchain4j.agent.tool.P;
