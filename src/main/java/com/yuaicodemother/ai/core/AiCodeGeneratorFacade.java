@@ -6,6 +6,7 @@ import com.yuaicodemother.ai.AiCodeGeneratorServiceFactory;
 import com.yuaicodemother.ai.model.message.AiResponseMessage;
 import com.yuaicodemother.ai.model.message.ToolExecutedMessage;
 import com.yuaicodemother.ai.model.message.ToolRequestMessage;
+import com.yuaicodemother.constant.AppConstant;
 import com.yuaicodemother.exception.BusinessException;
 import com.yuaicodemother.exception.ErrorCode;
 import com.yuaicodemother.ai.AiCodeGeneratorService;
@@ -30,14 +31,15 @@ import java.io.File;
 public class AiCodeGeneratorFacade {
     @Resource
     private AiCodeGeneratorServiceFactory aiCodeGeneratorServiceFactory;
-
+    @Resource
+    private VueProjectBuilder vueProjectBuilder;
     /**
      * 将 TokenStream 转换为 Flux<String>，并传递工具调用信息
      *
      * @param tokenStream TokenStream 对象
      * @return Flux<String> 流式响应
      */
-    private Flux<String> processTokenStream(TokenStream tokenStream) {
+    private Flux<String> processTokenStream(TokenStream tokenStream,Long appId) {
         return Flux.create(sink -> {
             tokenStream.onPartialResponse((String partialResponse) -> {
                         AiResponseMessage aiResponseMessage = new AiResponseMessage(partialResponse);
@@ -52,6 +54,8 @@ public class AiCodeGeneratorFacade {
                         sink.next(JSONUtil.toJsonStr(toolExecutedMessage));
                     })
                     .onCompleteResponse((ChatResponse response) -> {
+                        String projectPath = AppConstant.CODE_OUTPUT_ROOT_DIR + "/vue_project_" + appId;
+                        vueProjectBuilder.buildProject(projectPath);
                         sink.complete();
                     })
                     .onError((Throwable error) -> {
@@ -127,7 +131,7 @@ public class AiCodeGeneratorFacade {
         return switch(codeGenTypeEnum) {
             case VUE -> {
                 TokenStream tokenStream = aiCodeGeneratorService.generateVueProjectCodeStream(appId,userMessage);
-                yield processTokenStream(tokenStream);
+                yield processTokenStream(tokenStream,appId);
             }
             case HTML -> {
                 Flux<String> result = aiCodeGeneratorService.generateHtmlCodeStream(userMessage);

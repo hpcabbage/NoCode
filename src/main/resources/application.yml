@@ -13,6 +13,7 @@ spring:
       password: root
       ttl: 3600
       user: default
+      database: 0
   session:
     store-type: redis
     timeout: 2592000
