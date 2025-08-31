@@ -67,7 +67,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
     @Resource
     private ScreenshotService screenshotService;
     @Resource
-    private AiCodeGenTypeRoutingService aiCodeGenTypeRoutingService;
+    private AiCodeGenTypeRoutingServiceFactory aiCodeGenTypeRoutingServiceFactory;
     @Override
     public Long addApp(AppAddRequest appAddRequest, HttpServletRequest request) {
         // 参数校验
@@ -80,7 +80,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         app.setUserId(loginUser.getId());
         app.setAppName(initPrompt.substring(0,Math.min(initPrompt.length(),12)));
         // 使用AI智能选择代码生成类型
-        CodeGenTypeEnum codeGenTypeEnum = aiCodeGenTypeRoutingService.routeCodeGenType(initPrompt);
+        CodeGenTypeEnum codeGenTypeEnum = aiCodeGenTypeRoutingServiceFactory.createAiCodeGenTypeRoutingService().routeCodeGenType(initPrompt);
         app.setCodeGenType(codeGenTypeEnum.getValue());
         //插入数据库
         boolean result = this.save(app);

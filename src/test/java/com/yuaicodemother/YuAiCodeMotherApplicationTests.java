@@ -1,6 +1,7 @@
 package com.yuaicodemother;
 
 import com.yuaicodemother.ai.AiCodeGenTypeRoutingService;
+import com.yuaicodemother.ai.AiCodeGenTypeRoutingServiceFactory;
 import com.yuaicodemother.ai.AiCodeGeneratorService;
 import com.yuaicodemother.ai.enums.CodeGenTypeEnum;
 import com.yuaicodemother.ai.model.MultiFileCodeResult;
@@ -52,7 +53,6 @@ class YuAiCodeMotherApplicationTests {
         log.info("用户需求: {} -> {}", userPrompt, result.getValue());
     }
 
-
     @Test
     void generaterFluxCode() {
         Flux<String> codeStream = aiCodeGeneratorFacade.generateAndSaveCodeStream("生成一个向大家介绍acm的", CodeGenTypeEnum.MULTI_FILE,1L);
@@ -61,7 +61,6 @@ class YuAiCodeMotherApplicationTests {
             System.out.println(chunk);
         }
     }
-
 
     @Test
     void generateVueProjectCodeStream() {
@@ -75,13 +74,8 @@ class YuAiCodeMotherApplicationTests {
         String completeContent = String.join("", result);
         Assertions.assertNotNull(completeContent);
     }
+    @Resource
+    private AiCodeGenTypeRoutingServiceFactory routingServiceFactory;
 
-
-        @Test
-        void saveWebPageScreenshot() {
-            String testUrl = "https://www.codefather.cn";
-            String webPageScreenshot = WebScreenshotUtils.saveWebPageScreenshot(testUrl);
-            Assertions.assertNotNull(webPageScreenshot);
-        }
 
 }
