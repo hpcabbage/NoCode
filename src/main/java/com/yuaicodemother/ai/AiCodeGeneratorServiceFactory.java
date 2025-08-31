@@ -4,6 +4,9 @@ import cn.hutool.core.bean.BeanUtil;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.yuaicodemother.ai.enums.CodeGenTypeEnum;
+import com.yuaicodemother.ai.tool.FileDeleteTool;
+import com.yuaicodemother.ai.tool.FileDirReadTool;
+import com.yuaicodemother.ai.tool.FileModifyTool;
 import com.yuaicodemother.ai.tool.FileWriteTool;
 import com.yuaicodemother.exception.BusinessException;
 import com.yuaicodemother.exception.ErrorCode;
@@ -96,7 +99,12 @@ public class AiCodeGeneratorServiceFactory {
             case VUE -> AiServices.builder(AiCodeGeneratorService.class)
                     .streamingChatModel(reasoningStreamingChatModel)
                     .chatMemoryProvider(memoryId -> chatMemory)
-                    .tools(new FileWriteTool())
+                    .tools(
+                            new FileDirReadTool(),
+                            new FileModifyTool(),
+                            new FileDeleteTool(),
+                            new FileWriteTool()
+                            )
                     .hallucinatedToolNameStrategy(toolExecutionRequest -> ToolExecutionResultMessage.from(
                             toolExecutionRequest, "Error: there is no tool called " + toolExecutionRequest.name()
                     ))
