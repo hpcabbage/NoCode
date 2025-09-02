@@ -38,6 +38,7 @@ import com.yuaicodemother.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
@@ -127,6 +128,28 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         if (!Oldapp.getUserId().equals(loginUser.getId()) && !UserConstant.ADMIN_ROLE.equals(loginUser.getUserRole())) {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
         }
+        // 删除应用时，删除应用下的所有对话历史和部署文件
+        try {
+            chatHistoryService.remove(new QueryWrapper().eq("appId", id));
+            this.removeById(id);
+            // 同时删除应用下的作品的文件夹和文件
+            String codeGenType = Oldapp.getCodeGenType();
+            String sourceDirName = codeGenType + "_" + id;
+            String sourceDirPath = AppConstant.CODE_OUTPUT_ROOT_DIR + File.separator + sourceDirName;
+            File sourceDir = new File(sourceDirPath);
+            if (sourceDir.exists()) {
+                FileUtil.del(sourceDir);
+            }
+            String deployKey = Oldapp.getDeployKey();
+            //是否部署了
+            if (deployKey != null) {
+                String deployDirPath = AppConstant.CODE_DEPLOY_ROOT_DIR + File.separator + deployKey;
+                FileUtil.del(deployDirPath);
+            }
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "删除应用失败");
+        }
+
         return this.removeById(id);
     }
 
@@ -324,7 +347,9 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
             return false;
         }
         try {
+            // 删除应用的同时也应该删除关联的聊天记录和作品
             chatHistoryService.deleteyAppId(appId);
+
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "删除应用失败：" + e.getMessage());
         }

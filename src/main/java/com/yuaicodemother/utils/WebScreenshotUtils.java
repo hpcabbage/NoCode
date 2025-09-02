@@ -133,9 +133,9 @@ public class WebScreenshotUtils {
             // 创建驱动
             WebDriver driver = new ChromeDriver(options);
             // 设置页面加载超时
-            driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(30));
+            driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(50));
             // 设置隐式等待
-            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(10));
+            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(20));
             return driver;
         } catch (Exception e) {
             log.error("初始化 Chrome 浏览器失败", e);
