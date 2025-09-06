@@ -1,4 +1,5 @@
 # 壹句建站 开源项目
+壹句建站 **地址**：http://www.cabbagehp.online/ 
 ![主页](https://foruda.gitee.com/images/1756795685825699378/3a12a3c4_15429585.png "屏幕截图")
 ![AI对话建站](https://foruda.gitee.com/images/1756797132083758357/41309abe_15429585.png "屏幕截图")
 ## 项目简介
