@@ -1,7 +1,8 @@
 # 壹句建站 开源项目
-壹句建站 **地址**：http://www.cabbagehp.online/ 
-<img width="1890" height="951" alt="image" src="https://github.com/user-attachments/assets/94014831-bc16-4514-b226-e8e3a05b3dc0" />
-<img width="1863" height="921" alt="image" src="https://github.com/user-attachments/assets/f1b581e8-535b-4359-b602-4c6d89870a52" />
+壹句建站 **地址**：http://cabbagehp.online
+<img width="1890" height="880" alt="image" src="https://github.com/user-attachments/assets/0966cdf8-69b6-476c-8390-a5bce867dd98" />
+<img width="1895" height="875" alt="image" src="https://github.com/user-attachments/assets/e6511f46-c373-4080-8be5-6ecb3616416e" />
+
 
 ## 项目简介
 
@@ -180,3 +181,4 @@ GET /static/{deployKey}/**
 
 
 ---
+
