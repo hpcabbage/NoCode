@@ -1,7 +1,8 @@
 # 壹句建站 开源项目
 壹句建站 **地址**：http://www.cabbagehp.online/ 
-![主页](https://foruda.gitee.com/images/1756795685825699378/3a12a3c4_15429585.png "屏幕截图")
-![AI对话建站](https://foruda.gitee.com/images/1756797132083758357/41309abe_15429585.png "屏幕截图")
+<img width="1890" height="951" alt="image" src="https://github.com/user-attachments/assets/94014831-bc16-4514-b226-e8e3a05b3dc0" />
+<img width="1863" height="921" alt="image" src="https://github.com/user-attachments/assets/f1b581e8-535b-4359-b602-4c6d89870a52" />
+
 ## 项目简介
 
 `壹句建站` 是一个基于 Java 的开源项目，旨在通过 AI 技术实现代码的自动化生成。该项目结合了 AI 模型与代码解析、保存、构建等模块，能够根据用户输入的自然语言描述生成 HTML、CSS、JavaScript 等多种类型的代码文件，并支持构建 Vue 项目。
@@ -176,5 +177,6 @@ GET /static/{deployKey}/**
 - [MyBatis Plus](https://mp.baomidou.com/)
 - [Redisson](https://github.com/redisson/redisson)
 - [MinIO Java SDK](https://github.com/minio/minio-java)
+
 
 ---
