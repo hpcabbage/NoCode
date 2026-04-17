@@ -15,20 +15,29 @@ import com.yuaicodemother.ai.model.HtmlCodeResult;
 import com.yuaicodemother.ai.model.MultiFileCodeResult;
 import com.yuaicodemother.ai.parser.CodeParserExecutor;
 import com.yuaicodemother.ai.save.CodeFileSaveExecutor;
+import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.model.chat.StreamingChatModel;
+import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.service.TokenStream;
 import dev.langchain4j.service.tool.ToolExecution;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.el.parser.Token;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 
 @Service
 @Slf4j
 public class AiCodeGeneratorFacade {
+    private static final String HTML_PROMPT_PATH = "prompt/codegen-html-system-prompt.txt";
+    private static final String MULTI_FILE_PROMPT_PATH = "prompt/codegen-multi-file-system-prompt.txt";
+
     @Resource
     private AiCodeGeneratorServiceFactory aiCodeGeneratorServiceFactory;
     @Resource
@@ -106,18 +115,69 @@ public class AiCodeGeneratorFacade {
         return codeStream.doOnNext(chunk -> {
             // 实时收集代码片段
             codeBuilder.append(chunk);
-        }).doOnComplete(() -> {
-            // 流式返回完成后保存代码
-            try {
-                String completeCode = codeBuilder.toString();
-                // 使用执行器解析代码
-                Object parsedResult = CodeParserExecutor.executeParser(completeCode, codeGenType);
-                // 使用执行器保存代码
-                File savedDir = CodeFileSaveExecutor.executeSave(parsedResult, codeGenType,appId);
-                log.info("保存成功，路径为：" + savedDir.getAbsolutePath());
-            } catch (Exception e) {
-                log.error("保存失败: {}", e.getMessage());
-            }
+        }).doOnComplete(() -> saveGeneratedCode(codeBuilder.toString(), codeGenType, appId));
+    }
+
+    private void saveGeneratedCode(String completeCode, CodeGenTypeEnum codeGenType, Long appId) {
+        try {
+            Object parsedResult = CodeParserExecutor.executeParser(completeCode, codeGenType);
+            File savedDir = CodeFileSaveExecutor.executeSave(parsedResult, codeGenType, appId);
+            log.info("保存成功，路径为：{}", savedDir.getAbsolutePath());
+        } catch (Exception e) {
+            log.error("保存失败", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String loadPrompt(String path) {
+        try {
+            ClassPathResource resource = new ClassPathResource(path);
+            byte[] bytes = resource.getInputStream().readAllBytes();
+            return new String(bytes, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            throw new RuntimeException("加载提示词失败: " + path, e);
+        }
+    }
+
+    private Flux<String> processManualStreamingChat(String userMessage, CodeGenTypeEnum codeGenType, Long appId) {
+        String systemPrompt = switch (codeGenType) {
+            case HTML -> loadPrompt(HTML_PROMPT_PATH);
+            case MULTI_FILE -> loadPrompt(MULTI_FILE_PROMPT_PATH);
+            default -> throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的流式生成类型");
+        };
+
+        StreamingChatModel streamingChatModel = aiCodeGeneratorServiceFactory.getStreamingChatModel();
+        ChatRequest chatRequest = ChatRequest.builder()
+                .messages(
+                        SystemMessage.from(systemPrompt),
+                        UserMessage.from(userMessage)
+                )
+                .build();
+
+        return Flux.create(sink -> {
+            StringBuilder codeBuilder = new StringBuilder();
+            streamingChatModel.chat(chatRequest, new StreamingChatResponseHandler() {
+                @Override
+                public void onPartialResponse(String partialResponse) {
+                    codeBuilder.append(partialResponse);
+                    sink.next(JSONUtil.toJsonStr(new AiResponseMessage(partialResponse)));
+                }
+
+                @Override
+                public void onCompleteResponse(ChatResponse completeResponse) {
+                    try {
+                        saveGeneratedCode(codeBuilder.toString(), codeGenType, appId);
+                        sink.complete();
+                    } catch (Exception e) {
+                        sink.error(e);
+                    }
+                }
+
+                @Override
+                public void onError(Throwable error) {
+                    sink.error(error);
+                }
+            });
         });
     }
 
@@ -133,14 +193,7 @@ public class AiCodeGeneratorFacade {
                 TokenStream tokenStream = aiCodeGeneratorService.generateVueProjectCodeStream(appId,userMessage);
                 yield processTokenStream(tokenStream,appId);
             }
-            case HTML -> {
-                Flux<String> result = aiCodeGeneratorService.generateHtmlCodeStream(userMessage);
-                yield processCodeStream(result,codeGenTypeEnum,appId);
-            }
-            case MULTI_FILE -> {
-                Flux<String> result = aiCodeGeneratorService.generateMultiFileCodeStream(userMessage);
-                yield processCodeStream(result,codeGenTypeEnum,appId);
-            }
+            case HTML, MULTI_FILE -> processManualStreamingChat(userMessage, codeGenTypeEnum, appId);
             default -> {
                 String errmessage = "不支持的生成类型:" + codeGenTypeEnum.getValue();
                 throw new BusinessException(ErrorCode.PARAMS_ERROR,errmessage);

@@ -27,6 +27,8 @@ import java.time.Duration;
 public class AiCodeGeneratorServiceFactory {
     @Resource(name = "openAiChatModel")
     private ChatModel chatModel;
+    @Resource(name = "streamingChatModelPrototype")
+    private StreamingChatModel streamingChatModel;
     @Resource
     private RedisChatMemoryStore redisChatMemoryStore;
     @Resource
@@ -42,6 +44,10 @@ public class AiCodeGeneratorServiceFactory {
                 log.info("AI 服务实例被移除,appId:{},原因：{}",key,value);
             }))
             .build();
+
+    public StreamingChatModel getStreamingChatModel() {
+        return streamingChatModel;
+    }
 
     /**
      * 兼容之前的模式
