@@ -28,6 +28,11 @@ public class AppVO implements Serializable {
     private String initPrompt;
 
     /**
+     * 来源模板id
+     */
+    private Long templateId;
+
+    /**
      * 代码生成类型（枚举）
      */
     private String codeGenType;

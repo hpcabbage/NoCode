@@ -54,6 +54,12 @@ public class App implements Serializable {
     private String initPrompt;
 
     /**
+     * 来源模板id
+     */
+    @Column("templateId")
+    private Long templateId;
+
+    /**
      * 代码生成类型（枚举）
      */
     @Column("codeGenType")

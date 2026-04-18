@@ -27,6 +27,7 @@ import com.yuaicodemother.model.dto.app.AppAddRequest;
 import com.yuaicodemother.model.dto.app.AppQueryRequest;
 import com.yuaicodemother.model.dto.app.AppUpdateRequest;
 import com.yuaicodemother.model.entity.App;
+import com.yuaicodemother.model.entity.SiteTemplate;
 import com.yuaicodemother.model.entity.User;
 import com.yuaicodemother.model.enums.ChatHistoryMessageTypeEnum;
 import com.yuaicodemother.model.vo.AppVO;
@@ -34,6 +35,7 @@ import com.yuaicodemother.model.vo.UserVO;
 import com.yuaicodemother.service.AppService;
 import com.yuaicodemother.service.ChatHistoryService;
 import com.yuaicodemother.service.ScreenshotService;
+import com.yuaicodemother.service.SiteTemplateService;
 import com.yuaicodemother.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
@@ -69,24 +71,51 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
     private ScreenshotService screenshotService;
     @Resource
     private AiCodeGenTypeRoutingServiceFactory aiCodeGenTypeRoutingServiceFactory;
+    @Resource
+    private SiteTemplateService siteTemplateService;
+
     @Override
     public Long addApp(AppAddRequest appAddRequest, HttpServletRequest request) {
-        // 参数校验
         ThrowUtils.throwIf(appAddRequest == null, ErrorCode.PARAMS_ERROR);
-        String initPrompt = appAddRequest.getInitPrompt();
-        ThrowUtils.throwIf(initPrompt == null, ErrorCode.PARAMS_ERROR);
         User loginUser = userService.getLoginUser(request);
+
+        String finalPrompt = appAddRequest.getInitPrompt();
+        String finalCodeGenType = null;
+        Long templateId = appAddRequest.getTemplateId();
+
+        if (templateId != null && templateId > 0) {
+            SiteTemplate siteTemplate = siteTemplateService.getById(templateId);
+            ThrowUtils.throwIf(siteTemplate == null, ErrorCode.NOT_FOUND_ERROR, "模板不存在");
+            String customPrompt = appAddRequest.getCustomPrompt();
+            finalPrompt = siteTemplate.getInitPrompt();
+            if (StrUtil.isNotBlank(customPrompt)) {
+                finalPrompt = finalPrompt + "\n\n用户补充要求：\n" + customPrompt;
+            }
+            finalCodeGenType = siteTemplate.getCodeGenType();
+            siteTemplateService.increaseUseCount(templateId);
+        }
+
+        ThrowUtils.throwIf(StrUtil.isBlank(finalPrompt), ErrorCode.PARAMS_ERROR, "应用初始化提示词不能为空");
+
         App app = new App();
         BeanUtil.copyProperties(appAddRequest, app);
+        app.setInitPrompt(finalPrompt);
+        app.setTemplateId(templateId);
         app.setUserId(loginUser.getId());
-        app.setAppName(initPrompt.substring(0,Math.min(initPrompt.length(),12)));
-        // 使用AI智能选择代码生成类型
-        CodeGenTypeEnum codeGenTypeEnum = aiCodeGenTypeRoutingServiceFactory.createAiCodeGenTypeRoutingService().routeCodeGenType(initPrompt);
+        app.setAppName(finalPrompt.substring(0, Math.min(finalPrompt.length(), 12)));
+
+        CodeGenTypeEnum codeGenTypeEnum;
+        if (StrUtil.isNotBlank(finalCodeGenType)) {
+            codeGenTypeEnum = CodeGenTypeEnum.getEnumByValue(finalCodeGenType);
+            ThrowUtils.throwIf(codeGenTypeEnum == null, ErrorCode.PARAMS_ERROR, "模板代码生成类型不合法");
+        } else {
+            codeGenTypeEnum = aiCodeGenTypeRoutingServiceFactory.createAiCodeGenTypeRoutingService().routeCodeGenType(finalPrompt);
+        }
         app.setCodeGenType(codeGenTypeEnum.getValue());
-        //插入数据库
+
         boolean result = this.save(app);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
-        log.info("应用创建成功, ID: {}, 类型: {}",app.getId(),codeGenTypeEnum.getValue());
+        log.info("应用创建成功, ID: {}, 类型: {}", app.getId(), codeGenTypeEnum.getValue());
         return app.getId();
     }
 
@@ -131,7 +160,6 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         // 删除应用时，删除应用下的所有对话历史和部署文件
         try {
             chatHistoryService.remove(new QueryWrapper().eq("appId", id));
-            this.removeById(id);
             // 同时删除应用下的作品的文件夹和文件
             String codeGenType = Oldapp.getCodeGenType();
             String sourceDirName = codeGenType + "_" + id;

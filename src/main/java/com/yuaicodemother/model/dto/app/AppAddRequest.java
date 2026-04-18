@@ -9,5 +9,15 @@ public class AppAddRequest {
      */
     private String initPrompt;
 
+    /**
+     * 来源模板id
+     */
+    private Long templateId;
+
+    /**
+     * 用户补充提示词
+     */
+    private String customPrompt;
+
     private static final long serialVersionUID = 1L;
 }
