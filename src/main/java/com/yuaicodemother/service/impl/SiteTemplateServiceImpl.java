@@ -155,7 +155,24 @@ public class SiteTemplateServiceImpl extends ServiceImpl<SiteTemplateMapper, Sit
         long pageNum = request.getPageNum();
         long pageSize = request.getPageSize();
         ThrowUtils.throwIf(pageSize > 20, ErrorCode.PARAMS_ERROR, "每页最多查询 20 个模板");
+
+        boolean isAdmin = loginUser != null && "admin".equals(loginUser.getUserRole());
+        Long queryUserId = request.getUserId();
+        Integer queryIsPublic = request.getIsPublic();
+
+        if (queryUserId != null) {
+            ThrowUtils.throwIf(loginUser == null, ErrorCode.NO_AUTH_ERROR, "登录后才能查看个人模板");
+            ThrowUtils.throwIf(!isAdmin && !queryUserId.equals(loginUser.getId()), ErrorCode.NO_AUTH_ERROR, "无权限查看其他用户模板");
+        }
+
         QueryWrapper queryWrapper = this.getQueryWrapper(request);
+
+        if (queryUserId != null) {
+            queryWrapper.eq("userId", queryUserId);
+        } else if (queryIsPublic == null && !isAdmin) {
+            queryWrapper.eq("isPublic", 1);
+        }
+
         Page<SiteTemplate> templatePage = this.page(Page.of(pageNum, pageSize), queryWrapper);
         Page<SiteTemplateVO> voPage = new Page<>(pageNum, pageSize, templatePage.getTotalRow());
         voPage.setRecords(this.getSiteTemplateVOList(templatePage.getRecords()));
