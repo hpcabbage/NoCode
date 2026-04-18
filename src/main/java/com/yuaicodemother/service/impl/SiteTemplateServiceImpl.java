@@ -13,6 +13,7 @@ import com.yuaicodemother.mapper.SiteTemplateMapper;
 import com.yuaicodemother.model.dto.template.SiteTemplateAddRequest;
 import com.yuaicodemother.model.dto.template.SiteTemplateCreateFromAppRequest;
 import com.yuaicodemother.model.dto.template.SiteTemplateQueryRequest;
+import com.yuaicodemother.model.dto.template.SiteTemplateUpdateRequest;
 import com.yuaicodemother.mapper.AppMapper;
 import com.yuaicodemother.model.entity.App;
 import com.yuaicodemother.model.entity.SiteTemplate;
@@ -88,6 +89,30 @@ public class SiteTemplateServiceImpl extends ServiceImpl<SiteTemplateMapper, Sit
         boolean result = this.save(siteTemplate);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "保存模板失败");
         return siteTemplate.getId();
+    }
+
+    @Override
+    public boolean updateSiteTemplate(SiteTemplateUpdateRequest request, User loginUser) {
+        ThrowUtils.throwIf(request == null || request.getId() == null || request.getId() <= 0, ErrorCode.PARAMS_ERROR);
+        ThrowUtils.throwIf(StrUtil.isBlank(request.getName()), ErrorCode.PARAMS_ERROR, "模板名称不能为空");
+
+        SiteTemplate oldTemplate = this.getById(request.getId());
+        ThrowUtils.throwIf(oldTemplate == null, ErrorCode.NOT_FOUND_ERROR, "模板不存在");
+
+        boolean isAdmin = loginUser != null && "admin".equals(loginUser.getUserRole());
+        ThrowUtils.throwIf(!isAdmin && !oldTemplate.getUserId().equals(loginUser.getId()), ErrorCode.NO_AUTH_ERROR, "无权限修改该模板");
+
+        SiteTemplate updateTemplate = new SiteTemplate();
+        updateTemplate.setId(request.getId());
+        updateTemplate.setName(request.getName());
+        updateTemplate.setDescription(request.getDescription());
+        updateTemplate.setCover(request.getCover());
+        updateTemplate.setCategory(request.getCategory());
+        updateTemplate.setEditTime(LocalDateTime.now());
+        if (request.getIsPublic() != null) {
+            updateTemplate.setIsPublic(request.getIsPublic());
+        }
+        return this.updateById(updateTemplate);
     }
 
     @Override

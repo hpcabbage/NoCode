@@ -6,6 +6,7 @@ import com.mybatisflex.core.service.IService;
 import com.yuaicodemother.model.dto.template.SiteTemplateAddRequest;
 import com.yuaicodemother.model.dto.template.SiteTemplateCreateFromAppRequest;
 import com.yuaicodemother.model.dto.template.SiteTemplateQueryRequest;
+import com.yuaicodemother.model.dto.template.SiteTemplateUpdateRequest;
 import com.yuaicodemother.model.entity.SiteTemplate;
 import com.yuaicodemother.model.entity.User;
 import com.yuaicodemother.model.vo.SiteTemplateVO;
@@ -17,6 +18,8 @@ public interface SiteTemplateService extends IService<SiteTemplate> {
     Long addSiteTemplate(SiteTemplateAddRequest request, User loginUser);
 
     Long createTemplateFromApp(SiteTemplateCreateFromAppRequest request, User loginUser);
+
+    boolean updateSiteTemplate(SiteTemplateUpdateRequest request, User loginUser);
 
     QueryWrapper getQueryWrapper(SiteTemplateQueryRequest request);
 

@@ -13,6 +13,7 @@ import com.yuaicodemother.model.dto.template.SiteTemplateAddRequest;
 import com.yuaicodemother.model.dto.template.SiteTemplateAdminUpdateRequest;
 import com.yuaicodemother.model.dto.template.SiteTemplateCreateFromAppRequest;
 import com.yuaicodemother.model.dto.template.SiteTemplateQueryRequest;
+import com.yuaicodemother.model.dto.template.SiteTemplateUpdateRequest;
 import com.yuaicodemother.model.entity.SiteTemplate;
 import com.yuaicodemother.model.entity.User;
 import com.yuaicodemother.model.vo.SiteTemplateVO;
@@ -43,6 +44,14 @@ public class SiteTemplateController {
                                                     HttpServletRequest httpServletRequest) {
         User loginUser = userService.getLoginUser(httpServletRequest);
         return ResultUtils.success(siteTemplateService.createTemplateFromApp(request, loginUser));
+    }
+
+    @PostMapping("/update")
+    public BaseResponse<Boolean> updateSiteTemplate(@RequestBody SiteTemplateUpdateRequest request,
+                                                    HttpServletRequest httpServletRequest) {
+        User loginUser = userService.getLoginUser(httpServletRequest);
+        ThrowUtils.throwIf(request == null || request.getId() == null || request.getId() <= 0, ErrorCode.PARAMS_ERROR);
+        return ResultUtils.success(siteTemplateService.updateSiteTemplate(request, loginUser));
     }
 
     @GetMapping("/get/vo")
