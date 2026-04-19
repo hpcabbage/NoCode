@@ -19,7 +19,8 @@
 - `site_template` 相关后端代码 diff 核对，确认字段、实体、服务、控制器链路已存在；
 - 当前仓库状态核对，确认未提交改动主体就是模板能力相关文件；
 - `RESP/AI2AI/latest.md` 与历史 index 复核，确认当前真实主线已经切到 `site_template` 第一阶段收口；
-- `NoCode/docs/README.md` / `plans/current-work.md` 复核，确认文档入口仍停留在旧的 HTML 落盘排查上下文。
+- `NoCode/docs/README.md` / `plans/current-work.md` 已切换到 `site_template` 第一阶段语境；
+- 已补充 `docs/specs/site-template-phase1-spec-2026-04-19.md`，用于承接当前主线的专题规格说明。
 
 ## Next Action
-只推进一个点：更新 `NoCode/docs/README.md`，把当前重点文档和当前工作面切换到 `site_template` 第一阶段收口，确保后续任何会话都先看到正确入口。
+只推进一个点：按 `docs/plans/site-template-phase1-final-staged-files.md` 完成最终 staged 清单确认，提交 `site_template` 第一阶段后直接切下一轮。
