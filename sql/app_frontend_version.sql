@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS `app_frontend_version` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键 id',
+  `appId` bigint NOT NULL COMMENT '所属应用 id',
+  `versionNo` int NOT NULL COMMENT '应用内前端版本号，从 1 递增',
+  `versionTitle` varchar(128) DEFAULT NULL COMMENT '版本标题',
+  `changeSummary` varchar(512) DEFAULT NULL COMMENT '版本备注',
+  `userPrompt` text COMMENT '触发本次前端修改的用户输入',
+  `codeGenType` varchar(32) NOT NULL COMMENT '代码生成类型:HTML/VUE/MULTI_FILE',
+  `sourceType` varchar(32) NOT NULL DEFAULT 'MANUAL_COMMIT' COMMENT '版本来源:MANUAL_COMMIT/ROLLBACK',
+  `versionPath` varchar(512) NOT NULL COMMENT '前端版本文件目录路径',
+  `metaPath` varchar(512) DEFAULT NULL COMMENT '版本元信息文件路径',
+  `parentVersionNo` int DEFAULT NULL COMMENT '父版本号',
+  `versionStatus` varchar(32) NOT NULL DEFAULT 'READY' COMMENT '版本状态:READY/FAILED',
+  `createdBy` bigint NOT NULL COMMENT '触发本次版本生成的用户 id',
+  `createTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updateTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `isDelete` tinyint NOT NULL DEFAULT 0 COMMENT '是否删除',
+  PRIMARY KEY (`id`),
+  KEY `idx_appId` (`appId`),
+  KEY `idx_appId_versionNo` (`appId`, `versionNo`),
+  KEY `idx_createdBy` (`createdBy`),
+  KEY `idx_createTime` (`createTime`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='应用前端修改版本记录表';
