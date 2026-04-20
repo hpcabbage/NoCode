@@ -16,6 +16,9 @@ import com.yuaicodemother.exception.ErrorCode;
 import com.yuaicodemother.exception.ThrowUtils;
 import com.yuaicodemother.model.dto.app.*;
 import com.yuaicodemother.model.entity.User;
+import com.yuaicodemother.model.vo.AppFrontendVersionDiffVO;
+import com.yuaicodemother.model.vo.AppFrontendVersionFileDiffVO;
+import com.yuaicodemother.model.vo.AppFrontendVersionVO;
 import com.yuaicodemother.model.vo.AppVO;
 import com.yuaicodemother.ratelimter.annotation.RateLimit;
 import com.yuaicodemother.ratelimter.enums.RateLimitType;
@@ -60,6 +63,58 @@ public class AppController {
     public BaseResponse<Boolean> updateApp(@RequestBody AppUpdateRequest appUpdateRequest, HttpServletRequest request) {
         appService.updateApp(appUpdateRequest, request);
         return ResultUtils.success(true);
+    }
+
+    @PostMapping("/commit/version")
+    public BaseResponse<AppFrontendVersionVO> commitAppVersion(@RequestBody AppCommitVersionRequest appCommitVersionRequest,
+                                                               HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        return ResultUtils.success(appService.commitAppVersion(appCommitVersionRequest, loginUser));
+    }
+
+    @PostMapping("/version/rollback")
+    public BaseResponse<AppFrontendVersionVO> rollbackAppVersion(@RequestBody AppRollbackVersionRequest rollbackRequest,
+                                                                 HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        return ResultUtils.success(appService.rollbackAppVersion(rollbackRequest, loginUser));
+    }
+
+    @PostMapping("/version/list/page")
+    public BaseResponse<Page<AppFrontendVersionVO>> listAppVersionVOByPage(@RequestBody AppFrontendVersionQueryRequest queryRequest,
+                                                                           HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        return ResultUtils.success(appService.listAppVersionVOByPage(queryRequest, loginUser));
+    }
+
+    @GetMapping("/version/get/vo")
+    public BaseResponse<AppFrontendVersionVO> getAppVersionVOById(@RequestParam Long versionId,
+                                                                  HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        return ResultUtils.success(appService.getAppVersionVOById(versionId, loginUser));
+    }
+
+    @PostMapping("/version/stable")
+    public BaseResponse<AppFrontendVersionVO> setAppVersionStable(@RequestBody AppSetVersionStableRequest stableRequest,
+                                                                  HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        return ResultUtils.success(appService.setAppVersionStable(stableRequest, loginUser));
+    }
+
+    @GetMapping("/version/diff")
+    public BaseResponse<AppFrontendVersionDiffVO> getAppVersionDiff(@RequestParam Long leftVersionId,
+                                                                    @RequestParam Long rightVersionId,
+                                                                    HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        return ResultUtils.success(appService.getAppVersionDiff(leftVersionId, rightVersionId, loginUser));
+    }
+
+    @GetMapping("/version/file-diff")
+    public BaseResponse<AppFrontendVersionFileDiffVO> getAppVersionFileDiff(@RequestParam Long leftVersionId,
+                                                                            @RequestParam Long rightVersionId,
+                                                                            @RequestParam String filePath,
+                                                                            HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        return ResultUtils.success(appService.getAppVersionFileDiff(leftVersionId, rightVersionId, filePath, loginUser));
     }
 
     @PostMapping("/delete")

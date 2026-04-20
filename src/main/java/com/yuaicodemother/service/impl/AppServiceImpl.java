@@ -24,14 +24,24 @@ import com.yuaicodemother.exception.ThrowUtils;
 import com.yuaicodemother.mapper.AppMapper;
 import com.yuaicodemother.mapper.UserMapper;
 import com.yuaicodemother.model.dto.app.AppAddRequest;
+import com.yuaicodemother.model.dto.app.AppCommitVersionRequest;
+import com.yuaicodemother.model.dto.app.AppFrontendVersionQueryRequest;
 import com.yuaicodemother.model.dto.app.AppQueryRequest;
+import com.yuaicodemother.model.dto.app.AppRollbackVersionRequest;
+import com.yuaicodemother.model.dto.app.AppSetVersionStableRequest;
 import com.yuaicodemother.model.dto.app.AppUpdateRequest;
 import com.yuaicodemother.model.entity.App;
+import com.yuaicodemother.model.entity.AppFrontendVersion;
 import com.yuaicodemother.model.entity.SiteTemplate;
 import com.yuaicodemother.model.entity.User;
 import com.yuaicodemother.model.enums.ChatHistoryMessageTypeEnum;
+import com.yuaicodemother.model.vo.AppFrontendVersionDiffVO;
+import com.yuaicodemother.model.vo.AppFrontendVersionFileDiffVO;
+import com.yuaicodemother.model.vo.AppFrontendVersionVO;
 import com.yuaicodemother.model.vo.AppVO;
 import com.yuaicodemother.model.vo.UserVO;
+import com.yuaicodemother.service.AppFrontendVersionService;
+import com.yuaicodemother.service.AppFrontendVersioningService;
 import com.yuaicodemother.service.AppService;
 import com.yuaicodemother.service.ChatHistoryService;
 import com.yuaicodemother.service.ScreenshotService;
@@ -73,6 +83,10 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
     private AiCodeGenTypeRoutingServiceFactory aiCodeGenTypeRoutingServiceFactory;
     @Resource
     private SiteTemplateService siteTemplateService;
+    @Resource
+    private AppFrontendVersioningService appFrontendVersioningService;
+    @Resource
+    private AppFrontendVersionService appFrontendVersionService;
 
     @Override
     public Long addApp(AppAddRequest appAddRequest, HttpServletRequest request) {
@@ -285,6 +299,120 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         Flux<String> codeStream = aiCodeGeneratorFacade.generateAndSaveCodeStream(message, codeGenTypeEnum, appId);
 
         return streamHandlerExecutor.doExecute(codeStream, chatHistoryService, appId, loginUser, codeGenTypeEnum);
+    }
+
+    @Override
+    public AppFrontendVersionVO commitAppVersion(AppCommitVersionRequest request, User loginUser) {
+        ThrowUtils.throwIf(request == null || request.getAppId() == null || request.getAppId() <= 0,
+                ErrorCode.PARAMS_ERROR, "应用 ID 非法");
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
+        App app = this.getById(request.getAppId());
+        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        if (!app.getUserId().equals(loginUser.getId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限提交该应用版本");
+        }
+        AppFrontendVersion version = appFrontendVersioningService.commitCurrentVersion(
+                request.getAppId(),
+                request.getVersionTitle(),
+                request.getChangeSummary(),
+                request.getUserPrompt()
+        );
+        return appFrontendVersionService.getAppFrontendVersionVO(version);
+    }
+
+    @Override
+    public AppFrontendVersionVO rollbackAppVersion(AppRollbackVersionRequest request, User loginUser) {
+        ThrowUtils.throwIf(request == null || request.getVersionId() == null || request.getVersionId() <= 0,
+                ErrorCode.PARAMS_ERROR, "版本 ID 非法");
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
+        AppFrontendVersionVO targetVersion = appFrontendVersionService.getVersionVOById(request.getVersionId());
+        App app = this.getById(targetVersion.getAppId());
+        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        if (!app.getUserId().equals(loginUser.getId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限回滚该应用版本");
+        }
+        AppFrontendVersion rollbackVersion = appFrontendVersioningService.rollbackToVersion(
+                request.getVersionId(),
+                request.getRollbackReason()
+        );
+        return appFrontendVersionService.getAppFrontendVersionVO(rollbackVersion);
+    }
+
+    @Override
+    public Page<AppFrontendVersionVO> listAppVersionVOByPage(AppFrontendVersionQueryRequest request, User loginUser) {
+        ThrowUtils.throwIf(request == null || request.getAppId() == null || request.getAppId() <= 0,
+                ErrorCode.PARAMS_ERROR, "应用 ID 非法");
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
+        App app = this.getById(request.getAppId());
+        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        if (!app.getUserId().equals(loginUser.getId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限查看该应用版本");
+        }
+        long pageNum = request.getPageNum();
+        long pageSize = request.getPageSize();
+        ThrowUtils.throwIf(pageSize > 50, ErrorCode.PARAMS_ERROR, "每页最多查询 50 条版本记录");
+        return appFrontendVersionService.listVersionVOByAppId(request.getAppId(), pageNum, pageSize);
+    }
+
+    @Override
+    public AppFrontendVersionVO getAppVersionVOById(Long versionId, User loginUser) {
+        ThrowUtils.throwIf(versionId == null || versionId <= 0, ErrorCode.PARAMS_ERROR, "版本 ID 非法");
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
+        AppFrontendVersionVO versionVO = appFrontendVersionService.getVersionVOById(versionId);
+        App app = this.getById(versionVO.getAppId());
+        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        if (!app.getUserId().equals(loginUser.getId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限查看该版本详情");
+        }
+        return versionVO;
+    }
+
+    @Override
+    public AppFrontendVersionVO setAppVersionStable(AppSetVersionStableRequest request, User loginUser) {
+        ThrowUtils.throwIf(request == null || request.getVersionId() == null || request.getVersionId() <= 0,
+                ErrorCode.PARAMS_ERROR, "版本 ID 非法");
+        ThrowUtils.throwIf(request.getIsStable() == null || (request.getIsStable() != 0 && request.getIsStable() != 1),
+                ErrorCode.PARAMS_ERROR, "稳定版本标记非法");
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
+        AppFrontendVersionVO versionVO = appFrontendVersionService.getVersionVOById(request.getVersionId());
+        App app = this.getById(versionVO.getAppId());
+        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        if (!app.getUserId().equals(loginUser.getId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限修改该版本稳定标记");
+        }
+        AppFrontendVersion updatedVersion = appFrontendVersionService.setVersionStable(request.getVersionId(), request.getIsStable());
+        return appFrontendVersionService.getAppFrontendVersionVO(updatedVersion);
+    }
+
+    @Override
+    public AppFrontendVersionDiffVO getAppVersionDiff(Long leftVersionId, Long rightVersionId, User loginUser) {
+        ThrowUtils.throwIf(leftVersionId == null || leftVersionId <= 0, ErrorCode.PARAMS_ERROR, "左侧版本 ID 非法");
+        ThrowUtils.throwIf(rightVersionId == null || rightVersionId <= 0, ErrorCode.PARAMS_ERROR, "右侧版本 ID 非法");
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
+        AppFrontendVersionVO leftVersion = appFrontendVersionService.getVersionVOById(leftVersionId);
+        AppFrontendVersionVO rightVersion = appFrontendVersionService.getVersionVOById(rightVersionId);
+        ThrowUtils.throwIf(!leftVersion.getAppId().equals(rightVersion.getAppId()), ErrorCode.PARAMS_ERROR, "只能比较同一应用下的版本");
+        App app = this.getById(leftVersion.getAppId());
+        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        if (!app.getUserId().equals(loginUser.getId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限比较该应用版本");
+        }
+        return appFrontendVersionService.getVersionDiff(leftVersionId, rightVersionId);
+    }
+
+    @Override
+    public AppFrontendVersionFileDiffVO getAppVersionFileDiff(Long leftVersionId, Long rightVersionId, String filePath, User loginUser) {
+        ThrowUtils.throwIf(StrUtil.isBlank(filePath), ErrorCode.PARAMS_ERROR, "文件路径不能为空");
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
+        AppFrontendVersionVO leftVersion = appFrontendVersionService.getVersionVOById(leftVersionId);
+        AppFrontendVersionVO rightVersion = appFrontendVersionService.getVersionVOById(rightVersionId);
+        ThrowUtils.throwIf(!leftVersion.getAppId().equals(rightVersion.getAppId()), ErrorCode.PARAMS_ERROR, "只能比较同一应用下的版本");
+        App app = this.getById(leftVersion.getAppId());
+        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        if (!app.getUserId().equals(loginUser.getId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限查看该应用文件差异");
+        }
+        return appFrontendVersionService.getFileDiff(leftVersionId, rightVersionId, filePath);
     }
 
     @Override

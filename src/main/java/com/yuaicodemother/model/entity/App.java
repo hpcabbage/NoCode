@@ -66,6 +66,12 @@ public class App implements Serializable {
     private String codeGenType;
 
     /**
+     * 当前使用中的前端版本 id
+     */
+    @Column("currentVersionId")
+    private Long currentVersionId;
+
+    /**
      * 部署标识
      */
     @Column("deployKey")
