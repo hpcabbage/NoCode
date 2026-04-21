@@ -2,7 +2,9 @@ package com.yuaicodemother.ai.core.handler;
 
 import com.yuaicodemother.ai.enums.CodeGenTypeEnum;
 import com.yuaicodemother.model.entity.User;
+import com.yuaicodemother.model.enums.GenerationPhaseEnum;
 import com.yuaicodemother.service.ChatHistoryService;
+import com.yuaicodemother.service.GenerationRuntimeRegistry;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,6 +22,8 @@ public class StreamHandlerExecutor {
 
     @Resource
     private JsonMessageStreamHandler jsonMessageStreamHandler;
+    @Resource
+    private GenerationRuntimeRegistry generationRuntimeRegistry;
 
     /**
      * 创建流处理器并处理聊天历史记录
@@ -33,12 +37,13 @@ public class StreamHandlerExecutor {
      */
     public Flux<String> doExecute(Flux<String> originFlux,
                                   ChatHistoryService chatHistoryService,
-                                  long appId, User loginUser, CodeGenTypeEnum codeGenType) {
-        return switch (codeGenType) {
-            case VUE -> // 使用注入的组件实例
-                    jsonMessageStreamHandler.handle(originFlux, chatHistoryService, appId, loginUser);
-            case HTML, MULTI_FILE -> // 简单文本处理器不需要依赖注入
-                    new SimpleTextStreamHandler().handle(originFlux, chatHistoryService, appId, loginUser);
+                                  long appId, User loginUser, CodeGenTypeEnum codeGenType,
+                                  String generationId) {
+        generationRuntimeRegistry.updatePhase(generationId, GenerationPhaseEnum.GENERATING);
+        Flux<String> handledFlux = switch (codeGenType) {
+            case VUE -> jsonMessageStreamHandler.handle(originFlux, chatHistoryService, appId, loginUser);
+            case HTML, MULTI_FILE -> new SimpleTextStreamHandler().handle(originFlux, chatHistoryService, appId, loginUser);
         };
+        return handledFlux.takeWhile(chunk -> !generationRuntimeRegistry.isStopRequested(generationId));
     }
 }

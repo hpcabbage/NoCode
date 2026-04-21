@@ -30,6 +30,7 @@ import com.yuaicodemother.model.dto.app.AppQueryRequest;
 import com.yuaicodemother.model.dto.app.AppRollbackVersionRequest;
 import com.yuaicodemother.model.dto.app.AppSetVersionStableRequest;
 import com.yuaicodemother.model.dto.app.AppUpdateRequest;
+import com.yuaicodemother.model.dto.app.AppStopGenerationRequest;
 import com.yuaicodemother.model.entity.App;
 import com.yuaicodemother.model.entity.AppFrontendVersion;
 import com.yuaicodemother.model.entity.SiteTemplate;
@@ -44,6 +45,7 @@ import com.yuaicodemother.service.AppFrontendVersionService;
 import com.yuaicodemother.service.AppFrontendVersioningService;
 import com.yuaicodemother.service.AppService;
 import com.yuaicodemother.service.ChatHistoryService;
+import com.yuaicodemother.service.GenerationRuntimeRegistry;
 import com.yuaicodemother.service.ScreenshotService;
 import com.yuaicodemother.service.SiteTemplateService;
 import com.yuaicodemother.service.UserService;
@@ -73,6 +75,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
     private AiCodeGeneratorFacade aiCodeGeneratorFacade;
     @Resource
     private ChatHistoryService chatHistoryService;
+    @Resource
+    private GenerationRuntimeRegistry generationRuntimeRegistry;
     @Resource
     private StreamHandlerExecutor streamHandlerExecutor;
     @Resource
@@ -277,7 +281,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
     }
 
     @Override
-    public Flux<String> chatToGenCode(Long appId, String message, User loginUser) {
+    public Flux<String> chatToGenCode(Long appId, String message, String generationId, User loginUser) {
         // 1. 参数校验
         ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用 ID 不能为空");
         ThrowUtils.throwIf(StrUtil.isBlank(message), ErrorCode.PARAMS_ERROR, "用户消息不能为空");
@@ -298,7 +302,21 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         // 5. 调用 AI 生成代码,生成流式的代码
         Flux<String> codeStream = aiCodeGeneratorFacade.generateAndSaveCodeStream(message, codeGenTypeEnum, appId);
 
-        return streamHandlerExecutor.doExecute(codeStream, chatHistoryService, appId, loginUser, codeGenTypeEnum);
+        return streamHandlerExecutor.doExecute(codeStream, chatHistoryService, appId, loginUser, codeGenTypeEnum, generationId);
+    }
+
+    @Override
+    public boolean stopChatGeneration(AppStopGenerationRequest request, User loginUser) {
+        ThrowUtils.throwIf(request == null || request.getAppId() == null || request.getAppId() <= 0,
+                ErrorCode.PARAMS_ERROR, "应用 ID 非法");
+        ThrowUtils.throwIf(StrUtil.isBlank(request.getGenerationId()), ErrorCode.PARAMS_ERROR, "generationId 不能为空");
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
+        App app = this.getById(request.getAppId());
+        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        if (!app.getUserId().equals(loginUser.getId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限终止该应用生成");
+        }
+        return generationRuntimeRegistry.requestStop(request.getGenerationId());
     }
 
     @Override

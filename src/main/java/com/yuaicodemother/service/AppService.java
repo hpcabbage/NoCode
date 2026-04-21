@@ -11,6 +11,7 @@ import com.yuaicodemother.model.dto.app.AppFrontendVersionQueryRequest;
 import com.yuaicodemother.model.dto.app.AppQueryRequest;
 import com.yuaicodemother.model.dto.app.AppRollbackVersionRequest;
 import com.yuaicodemother.model.dto.app.AppSetVersionStableRequest;
+import com.yuaicodemother.model.dto.app.AppStopGenerationRequest;
 import com.yuaicodemother.model.dto.app.AppUpdateRequest;
 import com.yuaicodemother.model.entity.App;
 import com.yuaicodemother.model.entity.User;
@@ -41,7 +42,9 @@ public interface AppService extends IService<App> {
 
     Page<AppVO> listMyAppVOByPage(AppQueryRequest appQueryRequest, HttpServletRequest request);
 
-    Flux<String> chatToGenCode(Long appId ,String userMessage, User loginUser);
+    Flux<String> chatToGenCode(Long appId ,String userMessage, String generationId, User loginUser);
+
+    boolean stopChatGeneration(AppStopGenerationRequest request, User loginUser);
 
     AppFrontendVersionVO commitAppVersion(AppCommitVersionRequest request, User loginUser);
 

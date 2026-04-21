@@ -22,7 +22,11 @@ import com.yuaicodemother.model.vo.AppFrontendVersionVO;
 import com.yuaicodemother.model.vo.AppVO;
 import com.yuaicodemother.ratelimter.annotation.RateLimit;
 import com.yuaicodemother.ratelimter.enums.RateLimitType;
+import com.yuaicodemother.model.dto.app.GenerationRuntimeState;
+import com.yuaicodemother.model.enums.GenerationPhaseEnum;
+import com.yuaicodemother.model.enums.GenerationStatusEnum;
 import com.yuaicodemother.service.AppService;
+import com.yuaicodemother.service.GenerationRuntimeRegistry;
 import com.yuaicodemother.service.ProjectDownloadService;
 import com.yuaicodemother.service.UserService;
 import jakarta.annotation.Resource;
@@ -52,6 +56,8 @@ public class AppController {
     private UserService userService;
     @Resource
     private ProjectDownloadService projectDownloadService;
+    @Resource
+    private GenerationRuntimeRegistry generationRuntimeRegistry;
 
 
     @PostMapping("/add")
@@ -280,13 +286,41 @@ public class AppController {
         response.setHeader("Cache-Control", "no-cache");
         response.setHeader("Connection", "keep-alive");
 
-        Flux<String> contentFlux = appService.chatToGenCode(appId, message, loginUser);
+        String generationId = java.util.UUID.randomUUID().toString();
+        GenerationRuntimeState runtimeState = GenerationRuntimeState.builder()
+                .generationId(generationId)
+                .appId(appId)
+                .userId(loginUser.getId())
+                .status(GenerationStatusEnum.GENERATING)
+                .phase(GenerationPhaseEnum.UNDERSTANDING)
+                .stopRequested(false)
+                .build();
+        generationRuntimeRegistry.register(runtimeState);
+
+        Flux<String> contentFlux = appService.chatToGenCode(appId, message, generationId, loginUser);
 
         try {
             var writer = response.getWriter();
+            writer.write("event: generation-started\n");
+            writer.write("data: " + JSONUtil.toJsonStr(Map.of(
+                    "generationId", generationId,
+                    "type", "GENERATION_STARTED",
+                    "status", GenerationStatusEnum.GENERATING.name(),
+                    "phase", GenerationPhaseEnum.UNDERSTANDING.name()
+            )) + "\n\n");
+            writer.flush();
+
             contentFlux.doOnNext(chunk -> {
                         try {
-                            Map<String, String> wrapper = Map.of("d", chunk);
+                            Map<String, Object> wrapper = Map.of(
+                                    "generationId", generationId,
+                                    "type", "CONTENT_CHUNK",
+                                    "status", GenerationStatusEnum.GENERATING.name(),
+                                    "phase", generationRuntimeRegistry.get(generationId) != null
+                                            ? generationRuntimeRegistry.get(generationId).getPhase().name()
+                                            : GenerationPhaseEnum.GENERATING.name(),
+                                    "d", chunk
+                            );
                             String jsonData = JSONUtil.toJsonStr(wrapper);
                             writer.write("data: " + jsonData + "\n\n");
                             writer.flush();
@@ -296,17 +330,34 @@ public class AppController {
                     })
                     .doOnComplete(() -> {
                         try {
+                            boolean stopped = generationRuntimeRegistry.isStopRequested(generationId);
+                            writer.write("event: " + (stopped ? "generation-stopped" : "generation-completed") + "\n");
+                            writer.write("data: " + JSONUtil.toJsonStr(Map.of(
+                                    "generationId", generationId,
+                                    "type", stopped ? "GENERATION_STOPPED" : "GENERATION_COMPLETED",
+                                    "status", stopped ? GenerationStatusEnum.STOPPED.name() : GenerationStatusEnum.SUCCESS.name(),
+                                    "phase", stopped ? GenerationPhaseEnum.GENERATING.name() : GenerationPhaseEnum.COMPLETED.name()
+                            )) + "\n\n");
                             writer.write("event: done\n");
                             writer.write("data: {}\n\n");
                             writer.flush();
+                            generationRuntimeRegistry.remove(generationId);
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
                     })
                     .blockLast();
         } catch (Exception e) {
+            generationRuntimeRegistry.remove(generationId);
             throw new RuntimeException("SSE 响应写出失败", e);
         }
+    }
+
+    @PostMapping("/chat/gen/code/stop")
+    public BaseResponse<Boolean> stopChatGeneration(@RequestBody AppStopGenerationRequest stopRequest,
+                                                    HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        return ResultUtils.success(appService.stopChatGeneration(stopRequest, loginUser));
     }
 
     /**
