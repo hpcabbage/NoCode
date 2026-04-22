@@ -68,11 +68,14 @@ public class GlobalExceptionHandler {
                 response.setHeader("Cache-Control", "no-cache");
                 response.setHeader("Connection", "keep-alive");
                 // 构造错误消息的SSE格式
-                Map<String, Object> errorData = Map.of(
-                        "error", true,
-                        "code", errorCode,
-                        "message", errorMessage
-                );
+                String generationId = request.getParameter("generationId");
+                Map<String, Object> errorData = new java.util.HashMap<>();
+                errorData.put("error", true);
+                errorData.put("code", errorCode);
+                errorData.put("message", errorMessage);
+                if (org.apache.commons.lang3.StringUtils.isNotBlank(generationId)) {
+                    errorData.put("generationId", generationId);
+                }
                 String errorJson = JSONUtil.toJsonStr(errorData);
                 // 发送业务错误事件（避免与标准error事件冲突）
                 String sseData = "event: business-error\ndata: " + errorJson + "\n\n";
