@@ -42,7 +42,7 @@ public class AppFrontendVersioningServiceImpl implements AppFrontendVersioningSe
         if (!savedDir.exists() || !savedDir.isDirectory()) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "当前应用前端结果不存在，请先生成代码");
         }
-        return createVersionRecord(appId, versionTitle, changeSummary, userPrompt, codeGenType, savedDir, "MANUAL_COMMIT", app.getCurrentVersionId());
+        return createVersionRecord(appId, versionTitle, changeSummary, userPrompt, codeGenType, savedDir, "MANUAL_COMMIT", null);
     }
 
     @Override
@@ -62,11 +62,11 @@ public class AppFrontendVersioningServiceImpl implements AppFrontendVersioningSe
         }
         File currentOutputDir = new File(buildCurrentOutputPath(app.getId(), codeGenType));
         restoreVersionToCurrentOutput(versionDir, currentOutputDir);
-        String rollbackPrompt = buildRollbackPrompt(targetVersion, rollbackReason);
-        String rollbackTitle = "回滚到 V" + targetVersion.getVersionNo();
-        String rollbackSummary = StrUtil.blankToDefault(rollbackReason,
-                "回滚到版本 V" + targetVersion.getVersionNo() + " - " + StrUtil.blankToDefault(targetVersion.getVersionTitle(), "未命名版本"));
-        return createVersionRecord(app.getId(), rollbackTitle, rollbackSummary, rollbackPrompt, codeGenType, currentOutputDir, "ROLLBACK", targetVersion.getId());
+        deleteVersionsAfter(app.getId(), targetVersion.getVersionNo(), targetVersion.getId());
+        app.setCurrentVersionId(targetVersion.getId());
+        app.setUpdateTime(LocalDateTime.now());
+        appMapper.update(app);
+        return targetVersion;
     }
 
     private AppFrontendVersion createVersionRecord(Long appId, String versionTitle, String changeSummary,
@@ -197,16 +197,32 @@ public class AppFrontendVersioningServiceImpl implements AppFrontendVersioningSe
         return userPrompt.length() > 120 ? userPrompt.substring(0, 120) : userPrompt;
     }
 
-    private String buildRollbackPrompt(AppFrontendVersion targetVersion, String rollbackReason) {
-        StringBuilder promptBuilder = new StringBuilder();
-        promptBuilder.append("rollbackToVersion=")
-                .append(targetVersion.getVersionNo())
-                .append("\nrollbackVersionId=")
-                .append(targetVersion.getId());
-        if (StrUtil.isNotBlank(rollbackReason)) {
-            promptBuilder.append("\nrollbackReason=").append(rollbackReason);
+    private void deleteVersionsAfter(Long appId, Integer targetVersionNo, Long targetVersionId) {
+        var versionsToDelete = appFrontendVersionService.listVersionsAfter(appId, targetVersionNo).stream()
+                .filter(version -> !version.getId().equals(targetVersionId))
+                .toList();
+        for (AppFrontendVersion version : versionsToDelete) {
+            deleteVersionWorkspace(version);
         }
-        return promptBuilder.toString();
+        boolean removed = appFrontendVersionService.removeVersionsAfter(appId, targetVersionNo);
+        if (!removed) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "删除回滚目标之后的版本记录失败");
+        }
+    }
+
+    private void deleteVersionWorkspace(AppFrontendVersion version) {
+        if (version == null || StrUtil.isBlank(version.getVersionPath())) {
+            return;
+        }
+        try {
+            File versionDir = new File(version.getVersionPath());
+            if (versionDir.exists()) {
+                FileUtil.del(versionDir);
+            }
+        } catch (Exception e) {
+            log.error("删除回滚后续版本目录失败, versionId={}, versionPath={}", version.getId(), version.getVersionPath(), e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "删除回滚后续版本目录失败: " + e.getMessage());
+        }
     }
 
     private Integer findLatestVersionNo(Long appId) {

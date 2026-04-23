@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS `app_frontend_version` (
   `versionPath` varchar(512) NOT NULL COMMENT '前端版本文件目录路径',
   `metaPath` varchar(512) DEFAULT NULL COMMENT '版本元信息文件路径',
   `parentVersionNo` int DEFAULT NULL COMMENT '父版本号',
+  `sourceVersionId` bigint DEFAULT NULL COMMENT '来源版本 id，主要用于表达回滚来源',
+  `isStable` tinyint NOT NULL DEFAULT 0 COMMENT '是否稳定版本:0-否 1-是',
   `versionStatus` varchar(32) NOT NULL DEFAULT 'READY' COMMENT '版本状态:READY/FAILED',
   `createdBy` bigint NOT NULL COMMENT '触发本次版本生成的用户 id',
   `createTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -18,6 +20,10 @@ CREATE TABLE IF NOT EXISTS `app_frontend_version` (
   PRIMARY KEY (`id`),
   KEY `idx_appId` (`appId`),
   KEY `idx_appId_versionNo` (`appId`, `versionNo`),
+  KEY `idx_sourceVersionId` (`sourceVersionId`),
   KEY `idx_createdBy` (`createdBy`),
   KEY `idx_createTime` (`createTime`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='应用前端修改版本记录表';
+
+ALTER TABLE `app`
+  ADD COLUMN `currentVersionId` bigint DEFAULT NULL COMMENT '当前使用中的前端版本 id' AFTER `codeGenType`;

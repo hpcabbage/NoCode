@@ -136,6 +136,30 @@ public class AppFrontendVersionServiceImpl extends ServiceImpl<AppFrontendVersio
     }
 
     @Override
+    public List<AppFrontendVersion> listVersionsAfter(Long appId, Integer versionNo) {
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用 ID 非法");
+        ThrowUtils.throwIf(versionNo == null || versionNo <= 0, ErrorCode.PARAMS_ERROR, "版本号非法");
+        QueryWrapper queryWrapper = QueryWrapper.create()
+                .eq("appId", appId)
+                .gt("versionNo", versionNo)
+                .orderBy("versionNo", false)
+                .orderBy("id", false);
+        return this.list(queryWrapper);
+    }
+
+    @Override
+    public boolean removeVersionsAfter(Long appId, Integer versionNo) {
+        List<AppFrontendVersion> versionsToDelete = listVersionsAfter(appId, versionNo);
+        if (versionsToDelete.isEmpty()) {
+            return true;
+        }
+        List<Long> versionIds = versionsToDelete.stream()
+                .map(AppFrontendVersion::getId)
+                .toList();
+        return this.removeByIds(versionIds);
+    }
+
+    @Override
     public AppFrontendVersionDiffVO getVersionDiff(Long leftVersionId, Long rightVersionId) {
         AppFrontendVersion leftVersion = validateComparableVersions(leftVersionId, rightVersionId)[0];
         AppFrontendVersion rightVersion = validateComparableVersions(leftVersionId, rightVersionId)[1];

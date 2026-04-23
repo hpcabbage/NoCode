@@ -36,6 +36,8 @@
 - `sourceType`：版本来源，例如 `MANUAL_COMMIT` / `ROLLBACK`
 - `metaPath`：版本元信息文件路径
 - `parentVersionNo`：父版本号
+- `sourceVersionId`：来源版本 id，主要用于表达“从哪一版恢复而来”
+- `isStable`：是否稳定版本，支持用户把某一版标记为长期保留版本
 
 ---
 
@@ -84,6 +86,8 @@ CREATE TABLE `app_frontend_version` (
   `versionPath` varchar(512) NOT NULL COMMENT '前端版本文件目录路径',
   `metaPath` varchar(512) DEFAULT NULL COMMENT '版本元信息文件路径',
   `parentVersionNo` int DEFAULT NULL COMMENT '父版本号',
+  `sourceVersionId` bigint DEFAULT NULL COMMENT '来源版本 id，主要用于表达回滚来源',
+  `isStable` tinyint NOT NULL DEFAULT 0 COMMENT '是否稳定版本:0-否 1-是',
   `versionStatus` varchar(32) NOT NULL DEFAULT 'READY' COMMENT '版本状态:READY/FAILED',
   `createdBy` bigint NOT NULL COMMENT '触发本次版本生成的用户 id',
   `createTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -92,9 +96,13 @@ CREATE TABLE `app_frontend_version` (
   PRIMARY KEY (`id`),
   KEY `idx_appId` (`appId`),
   KEY `idx_appId_versionNo` (`appId`, `versionNo`),
+  KEY `idx_sourceVersionId` (`sourceVersionId`),
   KEY `idx_createdBy` (`createdBy`),
   KEY `idx_createTime` (`createTime`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='应用前端修改版本记录表';
+
+ALTER TABLE `app`
+  ADD COLUMN `currentVersionId` bigint DEFAULT NULL COMMENT '当前使用中的前端版本 id' AFTER `codeGenType`;
 ```
 
 ---
@@ -134,13 +142,30 @@ ORDER BY `versionNo` DESC, `id` DESC;
 
 ---
 
-## 8. 当前推荐结论
+## 8. 增量迁移建议
+
+如果联调库或线上库已经存在旧版 `app_frontend_version`，不要直接重建表，优先执行增量迁移。
+
+当前仓库已补充：
+- `NoCode/sql/app_frontend_version_migration.sql`
+
+适用场景：
+- `app_frontend_version` 已存在，但还没有 `sourceVersionId`
+- `app_frontend_version` 已存在，但还没有 `isStable`
+- `app` 表还没有 `currentVersionId`
+
+推荐顺序：
+1. 新环境，直接执行 `app_frontend_version.sql`
+2. 老环境，在确认基线已存在后，再执行 `app_frontend_version_migration.sql`
+
+## 9. 当前推荐结论
 
 如果你现在就要先落数据库，我建议直接先建这张表。
 
 它有几个好处：
-- 不会污染 `app` 主表；
+- 大部分版本历史仍集中在独立表，不会把快照记录塞进 `app` 主表；
+- `app` 只额外保留一个 `currentVersionId`，便于明确当前正在使用哪一版；
 - 足够轻，第一阶段容易收口；
-- 已经能支撑后面的版本列表；
+- 已经能支撑后面的版本列表、稳定版本标记与回滚来源关系；
 - 数据库能明确记录“这版前端文件放在哪里”；
 - 后续如果要做回滚 / 对比 / 预览，也有扩展空间。

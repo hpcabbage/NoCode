@@ -29,6 +29,10 @@ public interface AppFrontendVersionService extends IService<AppFrontendVersion> 
 
     AppFrontendVersion setVersionStable(Long versionId, Integer isStable);
 
+    List<AppFrontendVersion> listVersionsAfter(Long appId, Integer versionNo);
+
+    boolean removeVersionsAfter(Long appId, Integer versionNo);
+
     AppFrontendVersionDiffVO getVersionDiff(Long leftVersionId, Long rightVersionId);
 
     AppFrontendVersionFileDiffVO getFileDiff(Long leftVersionId, Long rightVersionId, String filePath);
